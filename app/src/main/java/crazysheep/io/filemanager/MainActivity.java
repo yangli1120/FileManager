@@ -1,8 +1,13 @@
 package crazysheep.io.filemanager;
 
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.os.EnvironmentCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,13 +18,27 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.io.File;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import crazysheep.io.filemanager.adapter.FilesAdapter;
+import crazysheep.io.filemanager.asynctask.FileScannerTask;
+import crazysheep.io.filemanager.model.FileItemModel;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    @Bind(R.id.file_rv) RecyclerView mFileRv;
+    private FilesAdapter mFileAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -40,6 +59,16 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        initUI();
+    }
+
+    private void initUI() {
+        mFileRv.setLayoutManager(new LinearLayoutManager(this));
+        mFileAdapter = new FilesAdapter(this, null);
+        mFileRv.setAdapter(mFileAdapter);
+
+        doScanDir(Environment.getExternalStorageDirectory());
     }
 
     @Override
@@ -98,4 +127,17 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void doScanDir(File dir) {
+        if(dir.isDirectory() && dir.exists()) {
+            new FileScannerTask(new FileScannerTask.OnScannerListener() {
+
+                @Override
+                public void onScanDone(List<FileItemModel> files) {
+                    mFileAdapter.setData(files);
+                }
+            }).execute(dir);
+        }
+    }
+
 }

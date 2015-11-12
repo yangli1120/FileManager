@@ -6,4 +6,8 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+
+    <!-- file item layout -->
+    <dimen name="file_item_height">56dp</dimen>
+    <dimen name="file_item_text_size">17sp</dimen>
 </resources>
