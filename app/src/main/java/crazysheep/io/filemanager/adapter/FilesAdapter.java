@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import butterknife.Bind;
@@ -32,12 +34,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
         if(mFiles == null)
             mFiles = new ArrayList<>();
+        sortFiles();
     }
 
     public void setData(List<FileItemModel> files) {
         mFiles = files;
         if(mFiles == null)
             mFiles = new ArrayList<>();
+        sortFiles();
 
         notifyDataSetChanged();
     }
@@ -57,6 +61,15 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     @Override
     public int getItemCount() {
         return mFiles.size();
+    }
+
+    private void sortFiles() {
+        Collections.sort(mFiles, new Comparator<FileItemModel>() {
+            @Override
+            public int compare(FileItemModel lhs, FileItemModel rhs) {
+                return lhs.filename.compareTo(rhs.filename);
+            }
+        });
     }
 
     ///////////////////////////// ViewHolder //////////////////////////////////
