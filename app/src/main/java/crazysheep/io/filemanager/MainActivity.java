@@ -1,22 +1,23 @@
 package crazysheep.io.filemanager;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.os.EnvironmentCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import java.io.File;
 import java.util.List;
@@ -26,9 +27,12 @@ import butterknife.ButterKnife;
 import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.asynctask.FileScannerTask;
 import crazysheep.io.filemanager.model.FileItemModel;
+import crazysheep.io.filemanager.utils.PermissionsUtils;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private static final int REQUEST_CODE_READ_EXTERNAL_PERMISSION = 1;
 
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     private FilesAdapter mFileAdapter;
@@ -68,7 +72,26 @@ public class MainActivity extends AppCompatActivity
         mFileAdapter = new FilesAdapter(this, null);
         mFileRv.setAdapter(mFileAdapter);
 
-        doScanDir(Environment.getExternalStorageDirectory());
+        if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE))
+            doScanDir(Environment.getExternalStorageDirectory());
+        else
+            PermissionsUtils.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE,
+                    REQUEST_CODE_READ_EXTERNAL_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case REQUEST_CODE_READ_EXTERNAL_PERMISSION: {
+                for(int i = 0; i < permissions.length; i++) {
+                    if(permissions[i].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            && grantResults[i] == PackageManager.PERMISSION_GRANTED)
+                        doScanDir(Environment.getExternalStorageDirectory());
+                }
+            }break;
+        }
     }
 
     @Override
