@@ -32,6 +32,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     private List<FileItemModel> mFiles;
     private LayoutInflater mInflater;
 
+    private OnItemClickListener mOnItemClickListener;
+    private OnItemLongClickListener mOnItemLongClickListener;
+
     public FilesAdapter(Context context, List<FileItemModel> files, int mode) {
         mContext = context;
         mAllFiles = files;
@@ -61,6 +64,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         notifyDataSetChanged();
     }
 
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        mOnItemClickListener = listener;
+    }
+
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        mOnItemLongClickListener = listener;
+    }
+
     @Override
     public FileHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View convertView = mInflater.inflate(R.layout.layout_file_item, parent, false);
@@ -69,7 +80,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     }
 
     @Override
-    public void onBindViewHolder(FileHolder holder, int position) {
+    public void onBindViewHolder(final FileHolder holder, final int position) {
         FileItemModel itemModel = mFiles.get(position);
         if(itemModel.isDir())
             holder.mFileCoverIv.setImageResource(R.drawable.ic_folder_blue);
@@ -77,11 +88,33 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             holder.mFileCoverIv.setImageResource(R.drawable.ic_insert_drive_file);
 
         holder.mFileNameTv.setText(itemModel.filename);
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mOnItemClickListener != null)
+                    mOnItemClickListener.onClick(position, holder.itemView);
+            }
+        });
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if(mOnItemLongClickListener != null) {
+                    return mOnItemLongClickListener.onLongClick(position, holder.itemView);
+                }
+
+                return false;
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return mFiles.size();
+    }
+
+    public FileItemModel getItem(int position) {
+        return mFiles.get(position);
     }
 
     private void sortFiles() {
@@ -121,6 +154,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
                 if(!itemModel.isHidden())
                     mFiles.add(itemModel);
         }
+    }
+
+    public static interface OnItemClickListener {
+        public void onClick(int position, View view);
+    }
+
+    public static interface OnItemLongClickListener {
+        public boolean onLongClick(int position, View view);
     }
 
     ///////////////////////////// ViewHolder //////////////////////////////////

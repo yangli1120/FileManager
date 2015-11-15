@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.List;
 
 import butterknife.Bind;
@@ -38,6 +39,9 @@ public class MainActivity extends AppCompatActivity
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     private FilesAdapter mFileAdapter;
     private SettingsPrefs mSettingsPrefs;
+
+    private File mCurrentDir;
+    private LinkedList<File> mFileStack = new LinkedList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,24 +80,47 @@ public class MainActivity extends AppCompatActivity
         mFileAdapter = new FilesAdapter(this, null, mSettingsPrefs.getShowHiddenFiles()
                 ? FilesAdapter.MODE_SHOW_HIDDEN_FILES : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
         mFileRv.setAdapter(mFileAdapter);
+        mFileAdapter.setOnItemClickListener(new FilesAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(int position, View view) {
+                // TODO click item file
+                FileItemModel itemModel = mFileAdapter.getItem(position);
+                if(itemModel.isDir()) {
+                    mFileStack.push(mCurrentDir);
 
-        if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE))
+                    doScanDir(new File(itemModel.filepath));
+                }
+            }
+        });
+        mFileAdapter.setOnItemLongClickListener(new FilesAdapter.OnItemLongClickListener() {
+            @Override
+            public boolean onLongClick(int position, View view) {
+                Snackbar.make(mFileRv, "long click item: " + position, Snackbar.LENGTH_SHORT).show();
+
+                return true;
+            }
+        });
+
+        if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             doScanDir(Environment.getExternalStorageDirectory());
-        else
+        } else {
             PermissionsUtils.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE,
                     REQUEST_CODE_READ_EXTERNAL_PERMISSION);
+        }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         switch (requestCode) {
             case REQUEST_CODE_READ_EXTERNAL_PERMISSION: {
                 for(int i = 0; i < permissions.length; i++) {
                     if(permissions[i].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
-                            && grantResults[i] == PackageManager.PERMISSION_GRANTED)
+                            && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
                         doScanDir(Environment.getExternalStorageDirectory());
+                    }
                 }
             }break;
         }
@@ -104,6 +131,8 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(mFileStack.size() > 0) {
+            doScanDir(mFileStack.pop());
         } else {
             super.onBackPressed();
         }
@@ -171,6 +200,8 @@ public class MainActivity extends AppCompatActivity
 
     private void doScanDir(File dir) {
         if(dir.isDirectory() && dir.exists()) {
+            mCurrentDir = dir;
+
             new FileScannerTask(new FileScannerTask.OnScannerListener() {
 
                 @Override
