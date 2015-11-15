@@ -1,7 +1,10 @@
 package crazysheep.io.filemanager;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -29,6 +32,7 @@ import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.asynctask.FileScannerTask;
 import crazysheep.io.filemanager.model.FileItemModel;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
+import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.PermissionsUtils;
 
 public class MainActivity extends AppCompatActivity
@@ -85,10 +89,23 @@ public class MainActivity extends AppCompatActivity
             public void onClick(int position, View view) {
                 // TODO click item file
                 FileItemModel itemModel = mFileAdapter.getItem(position);
-                if(itemModel.isDir()) {
+                File file = new File(itemModel.filepath);
+                if(file.isDirectory()) {
                     mFileStack.push(mCurrentDir);
 
-                    doScanDir(new File(itemModel.filepath));
+                    doScanDir(file);
+                } else {
+                    Intent openIntent = new Intent(Intent.ACTION_VIEW);
+                    openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    openIntent.setDataAndType(Uri.fromFile(file), FileUtils.getMimeType(file));
+                    try {
+                        startActivity(openIntent);
+                    } catch (ActivityNotFoundException anfe) {
+                        anfe.printStackTrace();
+
+                        Snackbar.make(mFileRv, R.string.msg_can_not_open_file,
+                                Snackbar.LENGTH_LONG).show();
+                    }
                 }
             }
         });

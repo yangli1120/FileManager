@@ -19,6 +19,8 @@ import crazysheep.io.filemanager.R;
 import crazysheep.io.filemanager.model.FileItemModel;
 
 /**
+ * adapter for file RecyclerView
+ *
  * Created by crazysheep on 15/11/12.
  */
 public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> {

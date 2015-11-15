@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
 
+import java.io.File;
+
 /**
  * Created by crazysheep on 15/11/12.
  */
@@ -25,6 +27,10 @@ public class FileItemModel implements Parcelable {
 
     public boolean isHidden() {
         return isHidden;
+    }
+
+    public boolean isPicture() {
+        return false;
     }
 
     @Override
