@@ -27,6 +27,7 @@ import butterknife.ButterKnife;
 import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.asynctask.FileScannerTask;
 import crazysheep.io.filemanager.model.FileItemModel;
+import crazysheep.io.filemanager.prefs.SettingsPrefs;
 import crazysheep.io.filemanager.utils.PermissionsUtils;
 
 public class MainActivity extends AppCompatActivity
@@ -36,12 +37,15 @@ public class MainActivity extends AppCompatActivity
 
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     private FilesAdapter mFileAdapter;
+    private SettingsPrefs mSettingsPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        mSettingsPrefs = new SettingsPrefs(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -69,7 +73,8 @@ public class MainActivity extends AppCompatActivity
 
     private void initUI() {
         mFileRv.setLayoutManager(new LinearLayoutManager(this));
-        mFileAdapter = new FilesAdapter(this, null);
+        mFileAdapter = new FilesAdapter(this, null, mSettingsPrefs.getShowHiddenFiles()
+                ? FilesAdapter.MODE_SHOW_HIDDEN_FILES : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
         mFileRv.setAdapter(mFileAdapter);
 
         if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE))
@@ -108,6 +113,10 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        menu.findItem(R.id.action_show_hidden_files).setTitle(mSettingsPrefs.getShowHiddenFiles()
+                        ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
+
         return true;
     }
 
@@ -119,8 +128,17 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_show_hidden_files: {
+                mSettingsPrefs.setShowHiddenFiles(!mSettingsPrefs.getShowHiddenFiles());
+                mFileAdapter.setMode(mSettingsPrefs.getShowHiddenFiles()
+                        ? FilesAdapter.MODE_SHOW_HIDDEN_FILES
+                                : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
+
+                // update menu item title
+                item.setTitle(mSettingsPrefs.getShowHiddenFiles()
+                        ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
+            }break;
         }
 
         return super.onOptionsItemSelected(item);

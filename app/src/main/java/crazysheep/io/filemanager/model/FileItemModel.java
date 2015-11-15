@@ -17,6 +17,15 @@ public class FileItemModel implements Parcelable {
     public String filename;
     public String filepath;
     public int filetype;
+    public boolean isHidden;
+
+    public boolean isDir() {
+        return filetype == TYPE_DIR;
+    }
+
+    public boolean isHidden() {
+        return isHidden;
+    }
 
     @Override
     public int describeContents() {
