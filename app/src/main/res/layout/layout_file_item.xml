@@ -9,7 +9,6 @@
         android:id="@+id/file_cover_iv"
         android:layout_width="90dp"
         android:layout_height="match_parent"
-        android:src="@drawable/ic_folder_black_48dp"
         android:scaleType="center"
         android:adjustViewBounds="true" />
 

@@ -72,9 +72,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     public void onBindViewHolder(FileHolder holder, int position) {
         FileItemModel itemModel = mFiles.get(position);
         if(itemModel.isDir())
-            holder.mFileCoverIv.setImageResource(R.drawable.ic_folder_black_48dp);
+            holder.mFileCoverIv.setImageResource(R.drawable.ic_folder_blue);
         else
-            holder.mFileCoverIv.setImageResource(R.drawable.ic_insert_drive_file_black_48dp);
+            holder.mFileCoverIv.setImageResource(R.drawable.ic_insert_drive_file);
 
         holder.mFileNameTv.setText(itemModel.filename);
     }
