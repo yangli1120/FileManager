@@ -41,4 +41,32 @@ public class FileUtils {
         return !TextUtils.isEmpty(mimetype) && mimetype.startsWith("image/");
     }
 
+    /**
+     * for file byte count for human readable
+     * */
+    public static String formatFileSize(long bytecount) {
+        if (bytecount <= 0) {
+            return "0kb";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            if(bytecount >= 1024 * 1024 * 1024) { // GB
+                float gbSize = bytecount * 1f / (1024 * 1024 * 1024);
+
+                return sb.append(String.format("%.2f", gbSize)).append("GB").toString();
+            } else if(bytecount >= 1024 * 1024) { // MB
+                float mbSize = bytecount * 1f / (1024 * 1024);
+
+                return sb.append(String.format("%.2f", mbSize)).append("MB").toString();
+            } else if(bytecount >= 1024) { // KB
+                float kbSize = bytecount * 1f / 1024;
+
+                return sb.append(String.format("%.2f", kbSize)).append("KB").toString();
+            } else { // byte
+                float byteSize = bytecount * 1f;
+
+                return sb.append(String.format("%.2f", byteSize)).append("b").toString();
+            }
+        }
+    }
+
 }

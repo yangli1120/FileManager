@@ -17,6 +17,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import crazysheep.io.filemanager.R;
 import crazysheep.io.filemanager.model.FileItemModel;
+import crazysheep.io.filemanager.utils.DateUtils;
+import crazysheep.io.filemanager.utils.FileUtils;
 
 /**
  * adapter for file RecyclerView
@@ -90,6 +92,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             holder.mFileCoverIv.setImageResource(R.drawable.ic_insert_drive_file);
 
         holder.mFileNameTv.setText(itemModel.filename);
+        if(itemModel.isDir())
+            holder.mFileSubCountTv.setText(
+                    itemModel.subfileCount != FileItemModel.ILLEGAL_SUBFILE_COUNT
+                            ? mContext.getString(R.string.tv_file_sub_count, itemModel.subfileCount)
+                                    : null);
+        else
+            holder.mFileSubCountTv.setText(FileUtils.formatFileSize(itemModel.fileByteCount));
+        holder.mFileLastModifiedTimeTv.setText(DateUtils.formatTime(itemModel.fileLastModified));
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -172,6 +182,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
         @Bind(R.id.file_cover_iv) ImageView mFileCoverIv;
         @Bind(R.id.file_name_tv) TextView mFileNameTv;
+        @Bind(R.id.file_sub_count_tv) TextView mFileSubCountTv;
+        @Bind(R.id.file_last_modified_time_tv) TextView mFileLastModifiedTimeTv;
 
         public FileHolder(View view) {
             super(view);

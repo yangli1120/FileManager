@@ -10,6 +10,8 @@
 
     <string name="msg_can_not_open_file">Can not open target file</string>
 
+    <string name="tv_file_sub_count">%s项</string>
+
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
 </resources>

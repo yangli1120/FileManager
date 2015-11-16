@@ -41,11 +41,12 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_CODE_READ_EXTERNAL_PERMISSION = 1;
 
     @Bind(R.id.file_rv) RecyclerView mFileRv;
+    private LinearLayoutManager mLayoutMgr;
     private FilesAdapter mFileAdapter;
     private SettingsPrefs mSettingsPrefs;
 
     private File mCurrentDir;
-    private LinkedList<File> mFileStack = new LinkedList<>();
+    private LinkedList<ScanDirBean> mFileStack = new LinkedList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,20 +81,25 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initUI() {
-        mFileRv.setLayoutManager(new LinearLayoutManager(this));
+        mLayoutMgr = new LinearLayoutManager(this);
+        mFileRv.setLayoutManager(mLayoutMgr);
         mFileAdapter = new FilesAdapter(this, null, mSettingsPrefs.getShowHiddenFiles()
                 ? FilesAdapter.MODE_SHOW_HIDDEN_FILES : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
         mFileRv.setAdapter(mFileAdapter);
         mFileAdapter.setOnItemClickListener(new FilesAdapter.OnItemClickListener() {
             @Override
             public void onClick(int position, View view) {
-                // TODO click item file
+                // click item file
                 FileItemModel itemModel = mFileAdapter.getItem(position);
                 File file = new File(itemModel.filepath);
                 if(file.isDirectory()) {
-                    mFileStack.push(mCurrentDir);
+                    // save last directory first visible position and offset
+                    int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
+                    ScanDirBean dirBean = new ScanDirBean(mCurrentDir, firstVisibleItemPosition,
+                            mLayoutMgr.findViewByPosition(firstVisibleItemPosition).getTop());
+                    mFileStack.push(dirBean);
 
-                    doScanDir(file);
+                    doScanDir(new ScanDirBean(file, 0, 0));
                 } else {
                     Intent openIntent = new Intent(Intent.ACTION_VIEW);
                     openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -111,15 +117,15 @@ public class MainActivity extends AppCompatActivity
         });
         mFileAdapter.setOnItemLongClickListener(new FilesAdapter.OnItemLongClickListener() {
             @Override
-            public boolean onLongClick(int position, View view) {
-                Snackbar.make(mFileRv, "long click item: " + position, Snackbar.LENGTH_SHORT).show();
+            public boolean onLongClick(final int position, View view) {
+                // TODO item long click
 
                 return true;
             }
         });
 
         if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            doScanDir(Environment.getExternalStorageDirectory());
+            doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
         } else {
             PermissionsUtils.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE,
                     REQUEST_CODE_READ_EXTERNAL_PERMISSION);
@@ -136,7 +142,7 @@ public class MainActivity extends AppCompatActivity
                 for(int i = 0; i < permissions.length; i++) {
                     if(permissions[i].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
                             && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                        doScanDir(Environment.getExternalStorageDirectory());
+                        doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
                     }
                 }
             }break;
@@ -215,17 +221,33 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void doScanDir(File dir) {
-        if(dir.isDirectory() && dir.exists()) {
-            mCurrentDir = dir;
+    private void doScanDir(final ScanDirBean dirBean) {
+        if(dirBean.dir.isDirectory() && dirBean.dir.exists()) {
+            mCurrentDir = dirBean.dir;
 
             new FileScannerTask(new FileScannerTask.OnScannerListener() {
 
                 @Override
                 public void onScanDone(List<FileItemModel> files) {
                     mFileAdapter.setData(files);
+
+                    mLayoutMgr.scrollToPositionWithOffset(dirBean.lastTopPosition,
+                            dirBean.lastTopPositionOffset);
                 }
-            }).execute(dir);
+            }).execute(mCurrentDir);
+        }
+    }
+
+    private static class ScanDirBean {
+
+        public File dir;
+        public int lastTopPosition = 0;
+        public int lastTopPositionOffset = 0;
+
+        public ScanDirBean(@NonNull File dir, int topPosition, int topPositionOffset) {
+            this.dir = dir;
+            this.lastTopPosition = topPosition;
+            this.lastTopPositionOffset = topPositionOffset;
         }
     }
 

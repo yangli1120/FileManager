@@ -9,5 +9,6 @@
 
     <!-- file item layout -->
     <dimen name="file_item_height">56dp</dimen>
-    <dimen name="file_item_text_size">17sp</dimen>
+    <dimen name="file_item_text_size_17">17sp</dimen>
+    <dimen name="file_item_text_size_13">13sp</dimen>
 </resources>

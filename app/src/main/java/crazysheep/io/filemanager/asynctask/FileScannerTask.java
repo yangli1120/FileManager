@@ -73,6 +73,11 @@ public class FileScannerTask extends AsyncTask<File, Integer, List<FileItemModel
         itemModel.filepath = file.getAbsolutePath();
         itemModel.filetype = file.isDirectory() ? FileItemModel.TYPE_DIR : FileItemModel.TYPE_FILE;
         itemModel.isHidden = file.isHidden();
+        itemModel.subfileCount = file.isDirectory()
+                ? file.listFiles().length : FileItemModel.ILLEGAL_SUBFILE_COUNT;
+        itemModel.fileByteCount = file.isDirectory()
+                ? FileItemModel.ILEGAL_FILE_BYTE_COUNT : file.length();
+        itemModel.fileLastModified = file.lastModified();
 
         return itemModel;
     }
