@@ -69,8 +69,8 @@ public class MainActivity extends AppCompatActivity
         });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -89,36 +89,46 @@ public class MainActivity extends AppCompatActivity
         mFileAdapter.setOnItemClickListener(new FilesAdapter.OnItemClickListener() {
             @Override
             public void onClick(int position, View view) {
-                // click item file
-                FileItemModel itemModel = mFileAdapter.getItem(position);
-                File file = new File(itemModel.filepath);
-                if(file.isDirectory()) {
-                    // save last directory first visible position and offset
-                    int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
-                    ScanDirBean dirBean = new ScanDirBean(mCurrentDir, firstVisibleItemPosition,
-                            mLayoutMgr.findViewByPosition(firstVisibleItemPosition).getTop());
-                    mFileStack.push(dirBean);
-
-                    doScanDir(new ScanDirBean(file, 0, 0));
+                if(mFileAdapter.isEditingMode()) {
+                    mFileAdapter.toggleItemChoose(position);
                 } else {
-                    Intent openIntent = new Intent(Intent.ACTION_VIEW);
-                    openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    openIntent.setDataAndType(Uri.fromFile(file), FileUtils.getMimeType(file));
-                    try {
-                        startActivity(openIntent);
-                    } catch (ActivityNotFoundException anfe) {
-                        anfe.printStackTrace();
+                    // click item file
+                    FileItemModel itemModel = mFileAdapter.getItem(position);
+                    File file = new File(itemModel.filepath);
+                    if(file.isDirectory()) {
+                        // save last directory first visible position and offset
+                        int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
+                        ScanDirBean dirBean = new ScanDirBean(mCurrentDir, firstVisibleItemPosition,
+                                mLayoutMgr.findViewByPosition(firstVisibleItemPosition).getTop());
+                        mFileStack.push(dirBean);
 
-                        Snackbar.make(mFileRv, R.string.msg_can_not_open_file,
-                                Snackbar.LENGTH_LONG).show();
+                        doScanDir(new ScanDirBean(file, 0, 0));
+                    } else {
+                        Intent openIntent = new Intent(Intent.ACTION_VIEW);
+                        openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        openIntent.setDataAndType(Uri.fromFile(file), FileUtils.getMimeType(file));
+                        try {
+                            startActivity(openIntent);
+                        } catch (ActivityNotFoundException anfe) {
+                            anfe.printStackTrace();
+
+                            Snackbar.make(mFileRv, R.string.msg_can_not_open_file,
+                                    Snackbar.LENGTH_LONG).show();
+                        }
                     }
                 }
             }
         });
         mFileAdapter.setOnItemLongClickListener(new FilesAdapter.OnItemLongClickListener() {
             @Override
-            public boolean onLongClick(final int position, View view) {
+            public boolean onLongClick(int position, View view) {
                 // TODO item long click
+                if(!mFileAdapter.isEditingMode()) {
+                    invalidateOptionsMenu(); // recreate options menu
+
+                    mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
+                    mFileAdapter.toggleItemChoose(position);
+                }
 
                 return true;
             }
@@ -154,6 +164,10 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(mFileAdapter.isEditingMode()) {
+            mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
+
+            invalidateOptionsMenu();
         } else if(mFileStack.size() > 0) {
             doScanDir(mFileStack.pop());
         } else {
@@ -166,8 +180,14 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
 
-        menu.findItem(R.id.action_show_hidden_files).setTitle(mSettingsPrefs.getShowHiddenFiles()
-                        ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
+        if(mFileAdapter != null && mFileAdapter.isEditingMode()) {
+            menu.findItem(R.id.action_show_hidden_files).setVisible(false);
+        } else {
+            MenuItem item = menu.findItem(R.id.action_show_hidden_files);
+            item.setVisible(true);
+            item.setTitle(mSettingsPrefs.getShowHiddenFiles()
+                    ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
+        }
 
         return true;
     }
@@ -183,9 +203,9 @@ public class MainActivity extends AppCompatActivity
         switch (id) {
             case R.id.action_show_hidden_files: {
                 mSettingsPrefs.setShowHiddenFiles(!mSettingsPrefs.getShowHiddenFiles());
-                mFileAdapter.setMode(mSettingsPrefs.getShowHiddenFiles()
+                mFileAdapter.setHiddenMode(mSettingsPrefs.getShowHiddenFiles()
                         ? FilesAdapter.MODE_SHOW_HIDDEN_FILES
-                                : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
+                        : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
 
                 // update menu item title
                 item.setTitle(mSettingsPrefs.getShowHiddenFiles()

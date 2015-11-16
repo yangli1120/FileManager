@@ -2,9 +2,11 @@ package crazysheep.io.filemanager.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -31,24 +33,31 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     public static final int MODE_NOT_SHOW_HIDDEN_FILES = 1;
     private int mCurrentMode = MODE_NOT_SHOW_HIDDEN_FILES;
 
+    public static final int EDIT_MODE_NORMAL = 10;
+    public static final int EDIT_MODE_EDITING = 11;
+    private int mEditMode = EDIT_MODE_NORMAL;
+
     private Context mContext;
     private List<FileItemModel> mAllFiles;
     private List<FileItemModel> mFiles;
     private LayoutInflater mInflater;
+    private SparseArray<Boolean> mChooseFileMap;
 
     private OnItemClickListener mOnItemClickListener;
     private OnItemLongClickListener mOnItemLongClickListener;
 
-    public FilesAdapter(Context context, List<FileItemModel> files, int mode) {
+    public FilesAdapter(Context context, List<FileItemModel> files, int hiddenMode) {
         mContext = context;
         mAllFiles = files;
-        mCurrentMode = mode;
+        mCurrentMode = hiddenMode;
         mInflater = LayoutInflater.from(mContext);
+        mChooseFileMap = new SparseArray<>();
 
         if(mAllFiles == null)
             mAllFiles = new ArrayList<>();
         sortFiles();
         filterHidden();
+        resetItemChooseState();
     }
 
     public void setData(List<FileItemModel> files) {
@@ -57,15 +66,50 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             mAllFiles = new ArrayList<>();
         sortFiles();
         filterHidden();
+        resetItemChooseState();
 
         notifyDataSetChanged();
     }
 
-    public void setMode(int mode) {
+    public void setHiddenMode(int mode) {
         mCurrentMode = mode;
         filterHidden();
 
         notifyDataSetChanged();
+    }
+
+    public void setEditMode(int mode) {
+        if(mEditMode != mode) {
+            mEditMode = mode;
+
+            if(mEditMode == EDIT_MODE_EDITING)
+                ;// nothing
+            else
+                resetItemChooseState();
+
+            notifyDataSetChanged();
+        }
+    }
+
+    public boolean isEditingMode() {
+        return mEditMode == EDIT_MODE_EDITING;
+    }
+
+    public void toggleItemChoose(int position) {
+        if(mEditMode == EDIT_MODE_EDITING) {
+            if(!mChooseFileMap.get(position))
+                mChooseFileMap.put(position, true);
+            else
+                mChooseFileMap.put(position, false);
+
+            notifyDataSetChanged();
+        }
+    }
+
+    private void resetItemChooseState() {
+        mChooseFileMap = new SparseArray<>(mFiles.size());
+        for(int i = 0; i < mFiles.size(); i++)
+            mChooseFileMap.put(i, false);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -100,6 +144,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         else
             holder.mFileSubCountTv.setText(FileUtils.formatFileSize(itemModel.fileByteCount));
         holder.mFileLastModifiedTimeTv.setText(DateUtils.formatTime(itemModel.fileLastModified));
+        if(isEditingMode()) {
+            holder.mFileChooseCb.setVisibility(View.VISIBLE);
+            holder.mFileChooseCb.setChecked(mChooseFileMap.get(position));
+        } else {
+            holder.mFileChooseCb.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,6 +234,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         @Bind(R.id.file_name_tv) TextView mFileNameTv;
         @Bind(R.id.file_sub_count_tv) TextView mFileSubCountTv;
         @Bind(R.id.file_last_modified_time_tv) TextView mFileLastModifiedTimeTv;
+        @Bind(R.id.file_item_choose_cb) CheckBox mFileChooseCb;
 
         public FileHolder(View view) {
             super(view);
