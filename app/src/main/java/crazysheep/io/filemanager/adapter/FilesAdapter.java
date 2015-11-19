@@ -1,6 +1,7 @@
 package crazysheep.io.filemanager.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -112,6 +113,27 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             mChooseFileMap.put(i, false);
     }
 
+    public List<FileItemModel> getChoosenItems() {
+        List<FileItemModel> choosenItems = new ArrayList<>();
+        for(int i = 0; i < mChooseFileMap.size(); i++)
+            if(mChooseFileMap.valueAt(i))
+                choosenItems.add(mFiles.get(mChooseFileMap.keyAt(i)));
+
+        return choosenItems;
+    }
+
+    public void removeItems(@NonNull List<FileItemModel> items) {
+        for(FileItemModel item : items) {
+            int removeIndex = mFiles.indexOf(item);
+            mFiles.remove(item);
+            mAllFiles.remove(item);
+
+            notifyItemRemoved(removeIndex);
+        }
+
+        resetItemChooseState();
+    }
+
     public void setOnItemClickListener(OnItemClickListener listener) {
         mOnItemClickListener = listener;
     }
@@ -128,7 +150,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     }
 
     @Override
-    public void onBindViewHolder(final FileHolder holder, final int position) {
+    public void onBindViewHolder(FileHolder holder, int position) {
         FileItemModel itemModel = mFiles.get(position);
         if(itemModel.isDir())
             holder.mFileCoverIv.setImageResource(R.drawable.ic_folder_blue);
@@ -151,21 +173,34 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             holder.mFileChooseCb.setVisibility(View.GONE);
         }
 
+        updateClickListener(holder);
+    }
+
+    @Override
+    public void onViewRecycled(FileHolder holder) {
+        super.onViewRecycled(holder);
+
+        updateClickListener(holder);
+    }
+
+    private void updateClickListener(final FileHolder holder) {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
-                if(mOnItemClickListener != null)
-                    mOnItemClickListener.onClick(position, holder.itemView);
+                if (mOnItemClickListener != null)
+                    mOnItemClickListener.onClick(holder.getAdapterPosition(), holder.itemView);
             }
         });
         holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+
             @Override
             public boolean onLongClick(View v) {
-                if(mOnItemLongClickListener != null) {
-                    return mOnItemLongClickListener.onLongClick(position, holder.itemView);
-                }
+                if(mOnItemLongClickListener != null)
+                    mOnItemLongClickListener.onLongClick(holder.getAdapterPosition(),
+                            holder.itemView);
 
-                return false;
+                return true;
             }
         });
     }

@@ -2,6 +2,7 @@ package crazysheep.io.filemanager;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -32,6 +34,7 @@ import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.asynctask.FileScannerTask;
 import crazysheep.io.filemanager.model.FileItemModel;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
+import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.PermissionsUtils;
 
@@ -89,13 +92,13 @@ public class MainActivity extends AppCompatActivity
         mFileAdapter.setOnItemClickListener(new FilesAdapter.OnItemClickListener() {
             @Override
             public void onClick(int position, View view) {
-                if(mFileAdapter.isEditingMode()) {
+                if (mFileAdapter.isEditingMode()) {
                     mFileAdapter.toggleItemChoose(position);
                 } else {
                     // click item file
                     FileItemModel itemModel = mFileAdapter.getItem(position);
                     File file = new File(itemModel.filepath);
-                    if(file.isDirectory()) {
+                    if (file.isDirectory()) {
                         // save last directory first visible position and offset
                         int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
                         ScanDirBean dirBean = new ScanDirBean(mCurrentDir, firstVisibleItemPosition,
@@ -123,7 +126,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onLongClick(int position, View view) {
                 // TODO item long click
-                if(!mFileAdapter.isEditingMode()) {
+                if (!mFileAdapter.isEditingMode()) {
                     invalidateOptionsMenu(); // recreate options menu
 
                     mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
@@ -133,6 +136,7 @@ public class MainActivity extends AppCompatActivity
                 return true;
             }
         });
+        mFileRv.setItemAnimator(new DefaultItemAnimator());
 
         if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
@@ -178,14 +182,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-
         if(mFileAdapter != null && mFileAdapter.isEditingMode()) {
-            menu.findItem(R.id.action_show_hidden_files).setVisible(false);
+            getMenuInflater().inflate(R.menu.edit_mode_menu, menu);
         } else {
-            MenuItem item = menu.findItem(R.id.action_show_hidden_files);
-            item.setVisible(true);
-            item.setTitle(mSettingsPrefs.getShowHiddenFiles()
+            getMenuInflater().inflate(R.menu.main, menu);
+
+            menu.findItem(R.id.action_show_hidden_files).setTitle(mSettingsPrefs.getShowHiddenFiles()
                     ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
         }
 
@@ -210,6 +212,39 @@ public class MainActivity extends AppCompatActivity
                 // update menu item title
                 item.setTitle(mSettingsPrefs.getShowHiddenFiles()
                         ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
+            }break;
+
+            /////////////////// edit mode ///////////////////
+            case R.id.action_delete: {
+                DialogUtils.showConfirmDialog(this, null,
+                        getString(R.string.msg_delete_items, mFileAdapter.getChoosenItems().size()),
+                        new DialogUtils.ButtonAction() {
+                            @Override
+                            public String getTitle() {
+                                return getString(R.string.ok);
+                            }
+
+                            @Override
+                            public void onClick(DialogInterface dialog) {
+                                // TODO delete items real
+                                Snackbar.make(mFileRv,
+                                        "delete " + mFileAdapter.getChoosenItems().size()
+                                                + " items done",
+                                        Snackbar.LENGTH_LONG).show();
+
+                                mFileAdapter.removeItems(mFileAdapter.getChoosenItems());
+                            }
+                        },
+                        new DialogUtils.ButtonAction() {
+                            @Override
+                            public String getTitle() {
+                                return getString(R.string.cancel);
+                            }
+
+                            @Override
+                            public void onClick(DialogInterface dialog) {
+                            }
+                        });
             }break;
         }
 
