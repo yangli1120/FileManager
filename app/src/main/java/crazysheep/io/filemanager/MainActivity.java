@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,6 +24,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.anthonycr.grant.PermissionsManager;
+import com.anthonycr.grant.PermissionsResultAction;
 import com.orhanobut.logger.Logger;
 
 import java.io.File;
@@ -42,7 +43,6 @@ import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.LogUtils;
-import crazysheep.io.filemanager.utils.PermissionsUtils;
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -145,12 +145,21 @@ public class MainActivity extends BaseActivity
         });
         mFileRv.setItemAnimator(new DefaultItemAnimator());
 
-        if(PermissionsUtils.check(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
-        } else {
-            PermissionsUtils.request(this, Manifest.permission.READ_EXTERNAL_STORAGE,
-                    REQUEST_CODE_READ_EXTERNAL_PERMISSION);
-        }
+        // request permission: READ_EXTERNAL_STORAGE
+        PermissionsManager.getInstance().requestPermissionsIfNecessaryForResult(this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                new PermissionsResultAction() {
+                    @Override
+                    public void onGranted() {
+                        doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
+                    }
+
+                    @Override
+                    public void onDenied(String permission) {
+                        Snackbar.make(mFileRv, getString(R.string.msg_permission_denied),
+                                Snackbar.LENGTH_LONG).show();
+                    }
+                });
     }
 
     @Override
@@ -158,19 +167,7 @@ public class MainActivity extends BaseActivity
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        switch (requestCode) {
-            case REQUEST_CODE_READ_EXTERNAL_PERMISSION: {
-                if(PermissionsUtils.granted(Manifest.permission.READ_EXTERNAL_STORAGE,
-                        permissions, grantResults))
-                    doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
-            }break;
-
-            case REQUEST_CODE_WRITE_EXTERNAL_PERMISSION: {
-                if(PermissionsUtils.granted(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        permissions, grantResults))
-                    deleteChoosenFilesAndNofity();
-            }break;
-        }
+        PermissionsManager.getInstance().notifyPermissionsChange(permissions, grantResults);
     }
 
     @Override
@@ -237,18 +234,7 @@ public class MainActivity extends BaseActivity
                             @Override
                             public void onClick(DialogInterface dialog) {
                                 // TODO delete items real
-                                Snackbar.make(mFileRv,
-                                        "delete " + mFileAdapter.getChoosenItems().size()
-                                                + " items done",
-                                        Snackbar.LENGTH_LONG).show();
-
-                                if(PermissionsUtils.check(getActivity(),
-                                        Manifest.permission.WRITE_EXTERNAL_STORAGE))
-                                    deleteChoosenFilesAndNofity();
-                                else
-                                    PermissionsUtils.request(getActivity(),
-                                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                            REQUEST_CODE_WRITE_EXTERNAL_PERMISSION);
+                                requestToDeleteChoosenFilesAndNofity();
                             }
                         },
                         new DialogUtils.ButtonAction() {
@@ -313,19 +299,32 @@ public class MainActivity extends BaseActivity
         return true;
     }
 
-    private void deleteChoosenFilesAndNofity() {
-        List<FileItemModel> deleteItems = new ArrayList<> ();
-        for(FileItemModel deleteItem : mFileAdapter.getChoosenItems()) {
-            boolean deleteResult = new File(deleteItem.filepath).delete();
-            if (deleteResult)
-                deleteItems.add(deleteItem);
+    private void requestToDeleteChoosenFilesAndNofity() {
+        PermissionsManager.getInstance().requestPermissionsIfNecessaryForResult(this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                new PermissionsResultAction() {
+                    @Override
+                    public void onGranted() {
+                        List<FileItemModel> deleteItems = new ArrayList<>();
+                        for (FileItemModel deleteItem : mFileAdapter.getChoosenItems()) {
+                            boolean deleteResult = new File(deleteItem.filepath).delete();
+                            if (deleteResult)
+                                deleteItems.add(deleteItem);
 
-            Logger.t(LogUtils.getTag(MainActivity.this))
-                    .d("okAction, delete file result: " + deleteResult
-                            + ", delele file: " + deleteItem.filepath);
-        }
+                            Logger.t(LogUtils.getTag(MainActivity.this))
+                                    .d("okAction, delete file result: " + deleteResult
+                                            + ", delele file: " + deleteItem.filepath);
+                        }
 
-        mFileAdapter.removeItems(deleteItems);
+                        mFileAdapter.removeItems(deleteItems);
+                    }
+
+                    @Override
+                    public void onDenied(String permission) {
+                        Snackbar.make(mFileRv, getString(R.string.msg_permission_denied),
+                                Snackbar.LENGTH_LONG).show();
+                    }
+                });
     }
 
     private void doScanDir(final ScanDirBean dirBean) {

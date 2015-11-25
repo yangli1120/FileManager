@@ -12,6 +12,7 @@
 
     <string name="msg_can_not_open_file">Can not open target file</string>
     <string name="msg_delete_items">Delete %s items?</string>
+    <string name="msg_permission_denied">Request permission failed!</string>
 
     <string name="tv_file_sub_count">%s项</string>
 
