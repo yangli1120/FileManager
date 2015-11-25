@@ -15,7 +15,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,7 +25,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.orhanobut.logger.Logger;
+
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,12 +41,14 @@ import crazysheep.io.filemanager.prefs.SettingsPrefs;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
+import crazysheep.io.filemanager.utils.LogUtils;
 import crazysheep.io.filemanager.utils.PermissionsUtils;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int REQUEST_CODE_READ_EXTERNAL_PERMISSION = 1;
+    private static final int REQUEST_CODE_WRITE_EXTERNAL_PERMISSION = 2;
 
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     private LinearLayoutManager mLayoutMgr;
@@ -141,10 +145,10 @@ public class MainActivity extends AppCompatActivity
         });
         mFileRv.setItemAnimator(new DefaultItemAnimator());
 
-        if(PermissionsUtils.checkPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if(PermissionsUtils.check(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
         } else {
-            PermissionsUtils.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE,
+            PermissionsUtils.request(this, Manifest.permission.READ_EXTERNAL_STORAGE,
                     REQUEST_CODE_READ_EXTERNAL_PERMISSION);
         }
     }
@@ -156,12 +160,15 @@ public class MainActivity extends AppCompatActivity
 
         switch (requestCode) {
             case REQUEST_CODE_READ_EXTERNAL_PERMISSION: {
-                for(int i = 0; i < permissions.length; i++) {
-                    if(permissions[i].equals(Manifest.permission.READ_EXTERNAL_STORAGE)
-                            && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                        doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
-                    }
-                }
+                if(PermissionsUtils.granted(Manifest.permission.READ_EXTERNAL_STORAGE,
+                        permissions, grantResults))
+                    doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
+            }break;
+
+            case REQUEST_CODE_WRITE_EXTERNAL_PERMISSION: {
+                if(PermissionsUtils.granted(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        permissions, grantResults))
+                    deleteChoosenFilesAndNofity();
             }break;
         }
     }
@@ -235,7 +242,13 @@ public class MainActivity extends AppCompatActivity
                                                 + " items done",
                                         Snackbar.LENGTH_LONG).show();
 
-                                mFileAdapter.removeItems(mFileAdapter.getChoosenItems());
+                                if(PermissionsUtils.check(getActivity(),
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                                    deleteChoosenFilesAndNofity();
+                                else
+                                    PermissionsUtils.request(getActivity(),
+                                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                            REQUEST_CODE_WRITE_EXTERNAL_PERMISSION);
                             }
                         },
                         new DialogUtils.ButtonAction() {
@@ -298,6 +311,21 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void deleteChoosenFilesAndNofity() {
+        List<FileItemModel> deleteItems = new ArrayList<> ();
+        for(FileItemModel deleteItem : mFileAdapter.getChoosenItems()) {
+            boolean deleteResult = new File(deleteItem.filepath).delete();
+            if (deleteResult)
+                deleteItems.add(deleteItem);
+
+            Logger.t(LogUtils.getTag(MainActivity.this))
+                    .d("okAction, delete file result: " + deleteResult
+                            + ", delele file: " + deleteItem.filepath);
+        }
+
+        mFileAdapter.removeItems(deleteItems);
     }
 
     private void doScanDir(final ScanDirBean dirBean) {
