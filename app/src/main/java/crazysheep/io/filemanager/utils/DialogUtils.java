@@ -4,11 +4,10 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
 import android.view.View;
 
-import crazysheep.io.filemanager.R;
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 
 /**
  * dialog utils
@@ -26,51 +25,43 @@ public class DialogUtils {
     public static Dialog showConfirmDialog(Activity activity, String title, String content,
                                            final ButtonAction okAction,
                                            final ButtonAction cancelAction) {
-        final Dialog confirmDialog;
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.MyDialogTheme);
-        if (!TextUtils.isEmpty(title))
-            builder.setTitle(title);
-        if (!TextUtils.isEmpty(content))
-            builder.setMessage(content);
-        if (okAction != null) {
-            builder.setPositiveButton(okAction.getTitle(), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
+        MaterialDialog dialog = new MaterialDialog.Builder(activity)
+                .title(title)
+                .content(content)
+                .positiveText(okAction.getTitle())
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog,
+                                        @NonNull DialogAction which) {
+                        okAction.onClick(dialog);
+                    }
+                })
+                .negativeText(cancelAction.getTitle())
+                .onNegative(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog,
+                                        @NonNull DialogAction which) {
+                        cancelAction.onClick(dialog);
+                    }
+                })
+                .build();
+        dialog.setOwnerActivity(activity);
 
-                    okAction.onClick(dialog);
-                }
-            });
-        }
-        if (cancelAction != null) {
-            builder.setNegativeButton(cancelAction.getTitle(),
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
+        if (dialog.getOwnerActivity() != null
+                && !dialog.getOwnerActivity().isFinishing())
+            dialog.show();
 
-                            cancelAction.onClick(dialog);
-                        }
-                    });
-        }
-
-        confirmDialog = builder.create();
-        confirmDialog.setOwnerActivity(activity);
-
-        if (confirmDialog.getOwnerActivity() != null
-                && !confirmDialog.getOwnerActivity().isFinishing())
-            confirmDialog.show();
-
-        return confirmDialog;
+        return dialog;
     }
 
     /**
      * show custom dialog
      * */
     public static Dialog showCustomDialog(Activity activity, @NonNull View contentView) {
-        Dialog dialog = new Dialog(activity, R.style.MyDialogTheme);
+        Dialog dialog = new MaterialDialog.Builder(activity)
+                .customView(contentView, false)
+                .build();
         dialog.setOwnerActivity(activity);
-        dialog.setContentView(contentView);
 
         if(dialog.getOwnerActivity() != null && !dialog.getOwnerActivity().isFinishing())
             dialog.show();

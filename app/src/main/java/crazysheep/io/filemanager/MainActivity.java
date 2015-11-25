@@ -47,9 +47,6 @@ import crazysheep.io.filemanager.utils.LogUtils;
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final int REQUEST_CODE_READ_EXTERNAL_PERMISSION = 1;
-    private static final int REQUEST_CODE_WRITE_EXTERNAL_PERMISSION = 2;
-
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     private LinearLayoutManager mLayoutMgr;
     private FilesAdapter mFileAdapter;
