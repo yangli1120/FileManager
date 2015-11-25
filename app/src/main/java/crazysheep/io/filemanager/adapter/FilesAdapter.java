@@ -98,12 +98,9 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
     public void toggleItemChoose(int position) {
         if(mEditMode == EDIT_MODE_EDITING) {
-            if(!mChooseFileMap.get(position))
-                mChooseFileMap.put(position, true);
-            else
-                mChooseFileMap.put(position, false);
+            mChooseFileMap.put(position, !mChooseFileMap.get(position));
 
-            notifyDataSetChanged();
+            notifyItemChanged(position);
         }
     }
 

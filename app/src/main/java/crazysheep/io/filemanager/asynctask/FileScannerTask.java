@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import crazysheep.io.filemanager.model.FileItemModel;
+import crazysheep.io.filemanager.model.FileItemModelHelper;
 
 /**
  * async task for scanner target directory
@@ -35,7 +36,7 @@ public class FileScannerTask extends AsyncTask<File, Integer, List<FileItemModel
         List<FileItemModel> files = new ArrayList<>();
         if(targetFile.isDirectory()) {
             for(File file : targetFile.listFiles())
-                files.add(createFileItemModelFromFile(file));
+                files.add(FileItemModelHelper.createFileItemModelFromFile(file));
         } else {
             throw new RuntimeException("target file is NOT a directory, file path : "
                     + targetFile.getAbsolutePath());
@@ -65,21 +66,6 @@ public class FileScannerTask extends AsyncTask<File, Integer, List<FileItemModel
     public static class OnScannerListener {
         public void onProgressUpdate(int progress) {}
         public void onScanDone(List<FileItemModel> files) {}
-    }
-
-    private FileItemModel createFileItemModelFromFile(@NonNull File file) {
-        FileItemModel itemModel = new FileItemModel();
-        itemModel.filename = file.getName();
-        itemModel.filepath = file.getAbsolutePath();
-        itemModel.filetype = file.isDirectory() ? FileItemModel.TYPE_DIR : FileItemModel.TYPE_FILE;
-        itemModel.isHidden = file.isHidden();
-        itemModel.subfileCount = file.isDirectory()
-                ? file.listFiles().length : FileItemModel.ILLEGAL_SUBFILE_COUNT;
-        itemModel.fileByteCount = file.isDirectory()
-                ? FileItemModel.ILEGAL_FILE_BYTE_COUNT : file.length();
-        itemModel.fileLastModified = file.lastModified();
-
-        return itemModel;
     }
 
 }

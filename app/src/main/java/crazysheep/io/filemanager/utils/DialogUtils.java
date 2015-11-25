@@ -6,6 +6,9 @@ import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
+import android.view.View;
+
+import crazysheep.io.filemanager.R;
 
 /**
  * dialog utils
@@ -24,8 +27,7 @@ public class DialogUtils {
                                            final ButtonAction okAction,
                                            final ButtonAction cancelAction) {
         final Dialog confirmDialog;
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity,
-                android.support.v7.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert);
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.MyDialogTheme);
         if (!TextUtils.isEmpty(title))
             builder.setTitle(title);
         if (!TextUtils.isEmpty(content))
@@ -60,6 +62,20 @@ public class DialogUtils {
             confirmDialog.show();
 
         return confirmDialog;
+    }
+
+    /**
+     * show custom dialog
+     * */
+    public static Dialog showCustomDialog(Activity activity, @NonNull View contentView) {
+        Dialog dialog = new Dialog(activity, R.style.MyDialogTheme);
+        dialog.setOwnerActivity(activity);
+        dialog.setContentView(contentView);
+
+        if(dialog.getOwnerActivity() != null && !dialog.getOwnerActivity().isFinishing())
+            dialog.show();
+
+        return dialog;
     }
 
     /**

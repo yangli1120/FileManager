@@ -20,9 +20,11 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -34,6 +36,7 @@ import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.asynctask.FileScannerTask;
 import crazysheep.io.filemanager.model.FileItemModel;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
+import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.PermissionsUtils;
@@ -246,6 +249,27 @@ public class MainActivity extends AppCompatActivity
                             }
                         });
             }break;
+
+            case R.id.action_info: {
+                if(mFileAdapter.getChoosenItems().size() == 1) {
+                    FileItemModel itemModel = mFileAdapter.getChoosenItems().get(0);
+                    File choosenFile = new File(itemModel.filepath);
+
+                    View contentView = LayoutInflater.from(this).inflate(R.layout.dialog_file_info,
+                            null);
+                    TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
+                    fileTypeTv.setText(FileUtils.getMimeType(choosenFile));
+                    TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
+                    filePathTv.setText(choosenFile.getAbsolutePath());
+                    TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
+                    fileSizeTv.setText(FileUtils.formatFileSize(choosenFile.length()));
+                    TextView fileLastModifiedTv = ButterKnife.findById(contentView,
+                            R.id.file_last_modified_time_tv);
+                    fileLastModifiedTv.setText(DateUtils.formatTime(choosenFile.lastModified()));
+
+                    DialogUtils.showCustomDialog(this, contentView);
+                }
+            }break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -284,6 +308,7 @@ public class MainActivity extends AppCompatActivity
 
                 @Override
                 public void onScanDone(List<FileItemModel> files) {
+                    // add parent directory
                     mFileAdapter.setData(files);
 
                     mLayoutMgr.scrollToPositionWithOffset(dirBean.lastTopPosition,

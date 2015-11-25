@@ -8,6 +8,7 @@
     <string name="action_show_hidden_files">Show hidden files</string>
     <string name="action_not_show_hidden_files">Not show hidden files</string>
     <string name="action_delete">Delete</string>
+    <string name="action_info">Info</string>
 
     <string name="msg_can_not_open_file">Can not open target file</string>
     <string name="msg_delete_items">Delete %s items?</string>
@@ -16,4 +17,9 @@
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+
+    <string name="tv_file_type">File type</string>
+    <string name="tv_file_path">File path</string>
+    <string name="tv_file_size">File size</string>
+    <string name="tv_file_last_modified">Last modified</string>
 </resources>

@@ -14,4 +14,19 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <!-- for normal text -->
+    <style name="MyTextTheme">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+    <style name="MyTextTheme.Small" parent="MyTextTheme">
+        <item name="android:textSize">10sp</item>
+    </style>
+    <style name="MyTextTheme.Medium" parent="MyTextTheme">
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- for default dialog theme -->
+    <style name="MyDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@drawable/default_dialog_bg_inset</item>
+    </style>
 </resources>
