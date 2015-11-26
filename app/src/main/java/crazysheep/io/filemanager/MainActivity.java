@@ -26,7 +26,6 @@ import android.widget.TextView;
 
 import com.anthonycr.grant.PermissionsManager;
 import com.anthonycr.grant.PermissionsResultAction;
-import com.orhanobut.logger.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ import crazysheep.io.filemanager.prefs.SettingsPrefs;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
-import crazysheep.io.filemanager.utils.LogUtils;
+import crazysheep.io.filemanager.utils.L;
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -231,7 +230,7 @@ public class MainActivity extends BaseActivity
                             @Override
                             public void onClick(DialogInterface dialog) {
                                 // TODO delete items real
-                                requestToDeleteChoosenFilesAndNofity();
+                                requestToDeleteChosenFilesAndNotify();
                             }
                         },
                         new DialogUtils.ButtonAction() {
@@ -296,7 +295,7 @@ public class MainActivity extends BaseActivity
         return true;
     }
 
-    private void requestToDeleteChoosenFilesAndNofity() {
+    private void requestToDeleteChosenFilesAndNotify() {
         PermissionsManager.getInstance().requestPermissionsIfNecessaryForResult(this,
                 new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 new PermissionsResultAction() {
@@ -308,9 +307,8 @@ public class MainActivity extends BaseActivity
                             if (deleteResult)
                                 deleteItems.add(deleteItem);
 
-                            Logger.t(LogUtils.getTag(MainActivity.this))
-                                    .d("okAction, delete file result: " + deleteResult
-                                            + ", delele file: " + deleteItem.filepath);
+                            L.d(TAG, "okAction, delete file result: " + deleteResult
+                                    + ", delele file: " + deleteItem.filepath);
                         }
 
                         mFileAdapter.removeItems(deleteItems);
