@@ -229,7 +229,7 @@ public class MainActivity extends BaseActivity
 
                             @Override
                             public void onClick(DialogInterface dialog) {
-                                // TODO delete items real
+                                // delete items real
                                 requestToDeleteChosenFilesAndNotify();
                             }
                         },
@@ -248,19 +248,19 @@ public class MainActivity extends BaseActivity
             case R.id.action_info: {
                 if(mFileAdapter.getChoosenItems().size() == 1) {
                     FileItemModel itemModel = mFileAdapter.getChoosenItems().get(0);
-                    File choosenFile = new File(itemModel.filepath);
+                    File chosenFile = new File(itemModel.filepath);
 
                     View contentView = LayoutInflater.from(this).inflate(R.layout.dialog_file_info,
                             null);
                     TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
-                    fileTypeTv.setText(FileUtils.getMimeType(choosenFile));
+                    fileTypeTv.setText(FileUtils.getMimeType(chosenFile));
                     TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
-                    filePathTv.setText(choosenFile.getAbsolutePath());
+                    filePathTv.setText(chosenFile.getAbsolutePath());
                     TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
-                    fileSizeTv.setText(FileUtils.formatFileSize(choosenFile.length()));
+                    fileSizeTv.setText(FileUtils.formatFileSize(chosenFile.length()));
                     TextView fileLastModifiedTv = ButterKnife.findById(contentView,
                             R.id.file_last_modified_time_tv);
-                    fileLastModifiedTv.setText(DateUtils.formatTime(choosenFile.lastModified()));
+                    fileLastModifiedTv.setText(DateUtils.formatTime(chosenFile.lastModified()));
 
                     DialogUtils.showCustomDialog(this, contentView);
                 }
@@ -303,7 +303,7 @@ public class MainActivity extends BaseActivity
                     public void onGranted() {
                         List<FileItemModel> deleteItems = new ArrayList<>();
                         for (FileItemModel deleteItem : mFileAdapter.getChoosenItems()) {
-                            boolean deleteResult = new File(deleteItem.filepath).delete();
+                            boolean deleteResult = FileUtils.deleteFile(deleteItem.filepath);
                             if (deleteResult)
                                 deleteItems.add(deleteItem);
 
