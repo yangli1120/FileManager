@@ -12,8 +12,10 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,10 +24,14 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.TextView;
 
 import com.anthonycr.grant.PermissionsManager;
 import com.anthonycr.grant.PermissionsResultAction;
+import com.nineoldandroids.animation.Animator;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,14 +48,28 @@ import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.L;
+import crazysheep.io.filemanager.widget.DefaultAnimatorListener;
+import io.codetail.animation.SupportAnimator;
+import io.codetail.animation.ViewAnimationUtils;
+import io.codetail.animation.arcanimator.ArcAnimator;
+import io.codetail.animation.arcanimator.Side;
+import io.codetail.widget.RevealFrameLayout;
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     @Bind(R.id.file_rv) RecyclerView mFileRv;
+    @Bind(R.id.fab) FloatingActionButton mFab;
+    @Bind(R.id.fab_sheet_cv) CardView mFabSheetCv;
+    @Bind(R.id.fab_sheet_rfl) RevealFrameLayout mFabRevealFl;
     private LinearLayoutManager mLayoutMgr;
     private FilesAdapter mFileAdapter;
     private SettingsPrefs mSettingsPrefs;
+
+    private ArcAnimator mArcAnimator;
+    private ArcAnimator mReverseArcAnimator;
+    private SupportAnimator mRevealAnimator;
+    private SupportAnimator mReverseRevealAnimator;
 
     private File mCurrentDir;
     private LinkedList<ScanDirBean> mFileStack = new LinkedList<>();
@@ -65,15 +85,6 @@ public class MainActivity extends BaseActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -86,7 +97,88 @@ public class MainActivity extends BaseActivity
         initUI();
     }
 
+    private final static int[] mFabStartLocation = new int[2];
     private void initUI() {
+        mFab.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mFab.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                mFab.getLocationOnScreen(mFabStartLocation);
+            }
+        });
+        mFabSheetCv.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        mFabSheetCv.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                        mRevealAnimator = ViewAnimationUtils.createCircularReveal(mFabSheetCv,
+                                mFabSheetCv.getLeft(),
+                                mFabSheetCv.getTop(),
+                                0,
+                                (float) Math.sqrt(Math.pow(mFabSheetCv.getWidth(), 2)
+                                        + Math.pow(mFabSheetCv.getHeight(), 2)));
+                        mRevealAnimator.setDuration(300);
+                        mRevealAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+                        mReverseRevealAnimator = mRevealAnimator.reverse();
+                        mReverseRevealAnimator.addListener(new SupportAnimator.AnimatorListener() {
+                            @Override
+                            public void onAnimationStart() {
+                            }
+
+                            @Override
+                            public void onAnimationEnd() {
+                                mFabRevealFl.setVisibility(View.GONE);
+                                //mFab.setVisibility(View.VISIBLE);
+
+                                mReverseArcAnimator = ArcAnimator.createArcAnimator(mFab,
+                                        mFabStartLocation[0],
+                                        mFabStartLocation[1],
+                                        360,
+                                        Side.RIGHT);
+                                mReverseArcAnimator.setDuration(300);
+                                mReverseArcAnimator.setInterpolator(new AccelerateInterpolator());
+                                mReverseArcAnimator.start();
+                            }
+
+                            @Override
+                            public void onAnimationCancel() {
+                            }
+
+                            @Override
+                            public void onAnimationRepeat() {
+                            }
+                        });
+
+                        int[] sheetLocations = new int[2];
+                        mFabSheetCv.getLocationOnScreen(sheetLocations);
+                        mArcAnimator = ArcAnimator.createArcAnimator(mFab,
+                                sheetLocations[0],
+                                sheetLocations[1],
+                                360,
+                                Side.LEFT);
+                        mArcAnimator.setDuration(300);
+                        mArcAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+                        mArcAnimator.addListener(new DefaultAnimatorListener() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                //mFab.setVisibility(View.GONE);
+                                mFabRevealFl.setVisibility(View.VISIBLE);
+                                mRevealAnimator.start();
+                            }
+                        });
+                    }
+                });
+        mFab.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                animateFab();
+            }
+        });
+
         mLayoutMgr = new LinearLayoutManager(this);
         mFileRv.setLayoutManager(mLayoutMgr);
         mFileAdapter = new FilesAdapter(this, null, mSettingsPrefs.getShowHiddenFiles()
@@ -158,6 +250,18 @@ public class MainActivity extends BaseActivity
                 });
     }
 
+    private boolean isAnimatedFab = false;
+    private void animateFab() {
+        isAnimatedFab = true;
+
+        mArcAnimator.start();
+    }
+    private void reverseAnimateFab() {
+        isAnimatedFab = false;
+
+        mReverseRevealAnimator.start();
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -171,6 +275,8 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } if(isAnimatedFab) {
+            reverseAnimateFab();
         } else if(mFileAdapter.isEditingMode()) {
             mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
 
