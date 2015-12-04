@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.percent.PercentRelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/action_copy_iv"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_file_copy"
+        app:layout_widthPercent="20%" />
+
+    <ImageView
+        android:id="@+id/action_cut_iv"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/action_copy_iv"
+        android:adjustViewBounds="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_file_cut"
+        app:layout_widthPercent="20%" />
+
+    <ImageView
+        android:id="@+id/action_delete_iv"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/action_cut_iv"
+        android:adjustViewBounds="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_file_delete"
+        app:layout_widthPercent="20%" />
+
+    <ImageView
+        android:id="@+id/action_info_iv"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/action_delete_iv"
+        android:adjustViewBounds="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_file_info"
+        app:layout_widthPercent="20%" />
+</android.support.percent.PercentRelativeLayout>

@@ -110,13 +110,13 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             mChooseFileMap.put(i, false);
     }
 
-    public List<FileItemModel> getChoosenItems() {
-        List<FileItemModel> choosenItems = new ArrayList<>();
+    public List<FileItemModel> getChosenItems() {
+        List<FileItemModel> chosenItems = new ArrayList<>();
         for(int i = 0; i < mChooseFileMap.size(); i++)
             if(mChooseFileMap.valueAt(i))
-                choosenItems.add(mFiles.get(mChooseFileMap.keyAt(i)));
+                chosenItems.add(mFiles.get(mChooseFileMap.keyAt(i)));
 
-        return choosenItems;
+        return chosenItems;
     }
 
     public void removeItems(@NonNull List<FileItemModel> items) {

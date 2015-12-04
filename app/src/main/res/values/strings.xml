@@ -9,10 +9,17 @@
     <string name="action_not_show_hidden_files">Not show hidden files</string>
     <string name="action_delete">Delete</string>
     <string name="action_info">Info</string>
+    <string name="action_mode_choose">Edit</string>
+    <string name="action_new_folder">New folder</string>
 
     <string name="msg_can_not_open_file">Can not open target file</string>
     <string name="msg_delete_items">Delete %s items?</string>
     <string name="msg_permission_denied">Request permission failed!</string>
+    <string name="msg_have_not_choose_file">No file chosen</string>
+
+    <string name="msg_folder_is_exist">This folder is exist</string>
+
+    <string name="hint_input_new_folder_name">Input new folder name</string>
 
     <string name="tv_file_sub_count">%s项</string>
 
@@ -23,4 +30,8 @@
     <string name="tv_file_path">File path</string>
     <string name="tv_file_size">File size</string>
     <string name="tv_file_last_modified">Last modified</string>
+    <string name="tv_create_folder">Create a new folder</string>
+    <string name="tv_delete_files">Will delete %s files</string>
+    <string name="tv_delete_sing_file">Will delete \'%s\'</string>
+
 </resources>

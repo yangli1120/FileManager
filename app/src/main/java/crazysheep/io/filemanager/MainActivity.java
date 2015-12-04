@@ -1,6 +1,7 @@
 package crazysheep.io.filemanager;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -26,6 +27,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.anthonycr.grant.PermissionsManager;
@@ -40,8 +42,10 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.animator.FabAnimatorHelper;
+import crazysheep.io.filemanager.animator.FabMenuAnimatorHelper;
 import crazysheep.io.filemanager.asynctask.FileScannerTask;
 import crazysheep.io.filemanager.model.FileItemModel;
+import crazysheep.io.filemanager.model.ScanDirBean;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
@@ -52,12 +56,24 @@ import io.codetail.animation.arcanimator.Side;
 import io.codetail.widget.RevealFrameLayout;
 
 public class MainActivity extends BaseActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
+    @Bind(R.id.toolbar) Toolbar mToolbar;
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     @Bind(R.id.fab) FloatingActionButton mFab;
     @Bind(R.id.fab_sheet_cv) CardView mFabSheetCv;
     @Bind(R.id.fab_sheet_rfl) RevealFrameLayout mFabRevealFl;
+    @Bind(R.id.action_copy_iv) ImageView mFileCopyIv;
+    @Bind(R.id.action_cut_iv) ImageView mFileCutIv;
+    @Bind(R.id.action_delete_iv) ImageView mFileDeleteIv;
+    @Bind(R.id.action_info_iv) ImageView mFileInfoIv;
+    @Bind(R.id.fab_menu_rll) RevealFrameLayout mFabMenuRevealLl;
+    @Bind(R.id.fab_menu_fl) View mFabMenuParentFl;
+    @Bind(R.id.create_folder_fab) FloatingActionButton mCreateFolderFab;
+    @Bind(R.id.edit_mode_fab) FloatingActionButton mEditModeFab;
+
+    private FabMenuAnimatorHelper.Builder mMenuAnimatorBuilder;
+
     private LinearLayoutManager mLayoutMgr;
     private FilesAdapter mFileAdapter;
     private SettingsPrefs mSettingsPrefs;
@@ -78,11 +94,10 @@ public class MainActivity extends BaseActivity
 
         mSettingsPrefs = new SettingsPrefs(this);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar(mToolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, mToolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
@@ -94,14 +109,36 @@ public class MainActivity extends BaseActivity
     }
 
     private void initUI() {
+        mMenuAnimatorBuilder = FabMenuAnimatorHelper.wrap(mFabMenuRevealLl, mFabMenuParentFl, mFab)
+                .addFab(mCreateFolderFab, R.id.create_folder_fab)
+                .addFab(mEditModeFab, R.id.edit_mode_fab)
+                .setOnFabMenuItemClickListener(new FabMenuAnimatorHelper.OnFabItemClickListener() {
+                    @Override
+                    public void onFabItemClick(FloatingActionButton fab, int id) {
+                        switch (id) {
+                            case R.id.edit_mode_fab: {
+                                animateFab();
+                            }break;
+
+                            case R.id.create_folder_fab: {
+                                showCreateFolderDialog();
+                            }break;
+                        }
+                    }
+                });
         mFab.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                if(mFabState == STATE_CLOSED)
-                    animateFab();
+                if (!mMenuAnimatorBuilder.isAnimating() && !mMenuAnimatorBuilder.isExpanded())
+                    mMenuAnimatorBuilder.expanded();
             }
         });
+
+        mFileCopyIv.setOnClickListener(this);
+        mFileCutIv.setOnClickListener(this);
+        mFileDeleteIv.setOnClickListener(this);
+        mFileInfoIv.setOnClickListener(this);
 
         mLayoutMgr = new LinearLayoutManager(this);
         mFileRv.setLayoutManager(mLayoutMgr);
@@ -141,20 +178,6 @@ public class MainActivity extends BaseActivity
                 }
             }
         });
-        mFileAdapter.setOnItemLongClickListener(new FilesAdapter.OnItemLongClickListener() {
-            @Override
-            public boolean onLongClick(int position, View view) {
-                // TODO item long click
-                if (!mFileAdapter.isEditingMode()) {
-                    invalidateOptionsMenu(); // recreate options menu
-
-                    mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
-                    mFileAdapter.toggleItemChoose(position);
-                }
-
-                return true;
-            }
-        });
         mFileRv.setItemAnimator(new DefaultItemAnimator());
 
         // request permission: READ_EXTERNAL_STORAGE
@@ -172,6 +195,83 @@ public class MainActivity extends BaseActivity
                                 Snackbar.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    @Override
+    public void onClick(View v) {
+        // TODO
+        switch (v.getId()) {
+            case R.id.action_copy_iv: {
+                if(hasChosenFiles())
+                    Snackbar.make(mFileRv,
+                            "copy " + mFileAdapter.getChosenItems().size() + " item",
+                            Snackbar.LENGTH_SHORT).show();
+            }break;
+
+            case R.id.action_cut_iv: {
+                if(hasChosenFiles())
+                    Snackbar.make(mFileRv,
+                            "cut " + mFileAdapter.getChosenItems().size() + " item",
+                            Snackbar.LENGTH_SHORT).show();
+            }break;
+
+            case R.id.action_delete_iv: {
+                if(hasChosenFiles()) {
+                    final List<FileItemModel> chooseFiles = mFileAdapter.getChosenItems();
+                    String dialogTitle = chooseFiles.size() == 1
+                            ? getString(R.string.tv_delete_sing_file, chooseFiles.get(0).filename)
+                                    : getString(R.string.tv_delete_files, chooseFiles.size());
+                    DialogUtils.showConfirmDialog(this, dialogTitle, null,
+                            new DialogUtils.ButtonAction() {
+                                @Override
+                                public String getTitle() {
+                                    return getString(R.string.ok);
+                                }
+
+                                @Override
+                                public void onClick(DialogInterface dialog) {
+                                    DialogUtils.dismissDialog((Dialog)dialog);
+
+                                    for(FileItemModel item : chooseFiles) {
+                                        FileUtils.deleteFile(item.filepath);
+                                    }
+
+                                    // refresh UI
+                                    mFileAdapter.removeItems(chooseFiles);
+                                }
+                            },
+                            new DialogUtils.ButtonAction() {
+                                @Override
+                                public String getTitle() {
+                                    return getString(R.string.cancel);
+                                }
+
+                                @Override
+                                public void onClick(DialogInterface dialog) {
+                                    DialogUtils.dismissDialog((Dialog) dialog);
+                                }
+                            });
+                }
+            }break;
+
+            case R.id.action_info_iv: {
+                if(hasChosenFiles())
+                    Snackbar.make(mFileRv,
+                            "info " + mFileAdapter.getChosenItems().size() + " item",
+                            Snackbar.LENGTH_SHORT).show();
+            }break;
+        }
+    }
+
+    private boolean hasChosenFiles() {
+        if(mFileAdapter.getChosenItems().size() == 0) {
+            Snackbar.make(mFileRv, R.string.msg_have_not_choose_file,
+                    Snackbar.LENGTH_LONG).show();
+
+            return false;
+        }
+
+        return true;
     }
 
     private void animateFab() {
@@ -200,6 +300,8 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onAnimationEnd() {
                         mFabState = STATE_EXPANDED;
+
+                        toggleEditMode(true);
                     }
                 })
                 .arcComboReveal()
@@ -232,10 +334,22 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onAnimationEnd() {
                         mFabState = STATE_CLOSED;
+
+                        toggleEditMode(false);
                     }
                 })
                 .revealComboArc()
                 .animate();
+    }
+
+    private void toggleEditMode(boolean goEditMode) {
+        if(goEditMode) {
+            invalidateOptionsMenu(); // recreate options menu
+
+            mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
+        } else {
+            mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
+        }
     }
 
     @Override
@@ -251,6 +365,8 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(mMenuAnimatorBuilder.isExpanded()) {
+            mMenuAnimatorBuilder.closed();
         } else if(mFabState == STATE_ANIMATING) {
             // nothing
         } else if(mFabState == STATE_EXPANDED) {
@@ -270,10 +386,6 @@ public class MainActivity extends BaseActivity
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if(mFabState == STATE_ANIMATING) {
             return true;
-        } else if(mFabState == STATE_EXPANDED) {
-            reverseAnimateFab();
-
-            return true;
         }
 
         return super.dispatchTouchEvent(ev);
@@ -287,8 +399,10 @@ public class MainActivity extends BaseActivity
         } else {
             getMenuInflater().inflate(R.menu.main, menu);
 
-            menu.findItem(R.id.action_show_hidden_files).setTitle(mSettingsPrefs.getShowHiddenFiles()
-                    ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
+            menu.findItem(R.id.action_show_hidden_files)
+                    .setTitle(mSettingsPrefs.getShowHiddenFiles()
+                            ? R.string.action_not_show_hidden_files
+                            : R.string.action_show_hidden_files);
         }
 
         return true;
@@ -317,7 +431,7 @@ public class MainActivity extends BaseActivity
             /////////////////// edit mode ///////////////////
             case R.id.action_delete: {
                 DialogUtils.showConfirmDialog(this, null,
-                        getString(R.string.msg_delete_items, mFileAdapter.getChoosenItems().size()),
+                        getString(R.string.msg_delete_items, mFileAdapter.getChosenItems().size()),
                         new DialogUtils.ButtonAction() {
                             @Override
                             public String getTitle() {
@@ -343,8 +457,8 @@ public class MainActivity extends BaseActivity
             }break;
 
             case R.id.action_info: {
-                if(mFileAdapter.getChoosenItems().size() == 1) {
-                    FileItemModel itemModel = mFileAdapter.getChoosenItems().get(0);
+                if(mFileAdapter.getChosenItems().size() == 1) {
+                    FileItemModel itemModel = mFileAdapter.getChosenItems().get(0);
                     File chosenFile = new File(itemModel.filepath);
 
                     View contentView = LayoutInflater.from(this).inflate(R.layout.dialog_file_info,
@@ -371,22 +485,6 @@ public class MainActivity extends BaseActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camara) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -399,7 +497,7 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onGranted() {
                         List<FileItemModel> deleteItems = new ArrayList<>();
-                        for (FileItemModel deleteItem : mFileAdapter.getChoosenItems()) {
+                        for (FileItemModel deleteItem : mFileAdapter.getChosenItems()) {
                             boolean deleteResult = FileUtils.deleteFile(deleteItem.filepath);
                             if (deleteResult)
                                 deleteItems.add(deleteItem);
@@ -419,6 +517,30 @@ public class MainActivity extends BaseActivity
                 });
     }
 
+    private void showCreateFolderDialog() {
+        DialogUtils.showInputDialog(getActivity(), getString(R.string.tv_create_folder),
+                getString(R.string.hint_input_new_folder_name),
+                new DialogUtils.InputCallback() {
+                    @Override
+                    public void onInput(DialogInterface dialog, final String s) {
+                        final File newFolder = new File(mCurrentDir, s);
+                        if (newFolder.exists()) {
+                            Snackbar.make(mFileRv, R.string.msg_folder_is_exist,
+                                    Snackbar.LENGTH_LONG).show();
+
+                            return;
+                        }
+
+                        if(newFolder.mkdirs()) {
+                            // refresh current dir
+                            doScanDir(new ScanDirBean(mCurrentDir, 0, 0));
+
+                            // TODO for good UX, auto select the new folder
+                        }
+                    }
+                });
+    }
+
     private void doScanDir(final ScanDirBean dirBean) {
         if(dirBean.dir.isDirectory() && dirBean.dir.exists()) {
             mCurrentDir = dirBean.dir;
@@ -434,19 +556,6 @@ public class MainActivity extends BaseActivity
                             dirBean.lastTopPositionOffset);
                 }
             }).execute(mCurrentDir);
-        }
-    }
-
-    private static class ScanDirBean {
-
-        public File dir;
-        public int lastTopPosition = 0;
-        public int lastTopPositionOffset = 0;
-
-        public ScanDirBean(@NonNull File dir, int topPosition, int topPositionOffset) {
-            this.dir = dir;
-            this.lastTopPosition = topPosition;
-            this.lastTopPositionOffset = topPositionOffset;
         }
     }
 

@@ -24,6 +24,9 @@
     <style name="MyTextTheme.Medium" parent="MyTextTheme">
         <item name="android:textSize">13sp</item>
     </style>
+    <style name="MyTextTheme.Large" parent="MyTextTheme">
+        <item name="android:textSize">17sp</item>
+    </style>
 
     <!-- for default dialog theme -->
     <style name="MyDialogTheme" parent="Theme.AppCompat.Light.Dialog">

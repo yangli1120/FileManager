@@ -16,10 +16,14 @@ import com.afollestad.materialdialogs.MaterialDialog;
  */
 public class DialogUtils {
 
-    public static interface ButtonAction {
-        public String getTitle();
+    public interface ButtonAction {
+        String getTitle();
 
-        public void onClick(DialogInterface dialog);
+        void onClick(DialogInterface dialog);
+    }
+
+    public interface InputCallback {
+        void onInput(DialogInterface dialog, String s);
     }
 
     public static Dialog showConfirmDialog(Activity activity, String title, String content,
@@ -48,6 +52,30 @@ public class DialogUtils {
         dialog.setOwnerActivity(activity);
 
         if (dialog.getOwnerActivity() != null
+                && !dialog.getOwnerActivity().isFinishing())
+            dialog.show();
+
+        return dialog;
+    }
+
+    /**
+     * show input dialog
+     * */
+    public static Dialog showInputDialog(@NonNull Activity activity, String title,
+                                         String hint, final InputCallback callback) {
+        Dialog dialog = new MaterialDialog.Builder(activity)
+                .title(title)
+                .input(hint, null, false, new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                        if(callback != null)
+                            callback.onInput(dialog, input.toString());
+                    }
+                })
+                .build();
+        dialog.setOwnerActivity(activity);
+
+        if(dialog.getOwnerActivity() != null
                 && !dialog.getOwnerActivity().isFinishing())
             dialog.show();
 

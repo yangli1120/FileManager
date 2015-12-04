@@ -54,4 +54,20 @@ public class L {
             Logger.d(msg);
     }
 
+    /**
+     * error log
+     * */
+    public static void e(@NonNull String tag, @NonNull String msg, Exception e) {
+        if(DEBUG)
+            Logger.t(tag).e(e, msg);
+    }
+
+    /**
+     * error log with default tag
+     * */
+    public static void e(@NonNull String msg, Exception e) {
+        if(DEBUG)
+            Logger.e(e, msg);
+    }
+
 }
