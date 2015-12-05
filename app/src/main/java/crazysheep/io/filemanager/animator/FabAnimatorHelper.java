@@ -20,8 +20,8 @@ import io.codetail.animation.arcanimator.Side;
 public class FabAnimatorHelper {
 
     public interface AnimatorListener {
-        public void onAnimationStart();
-        public void onAnimationEnd();
+        void onAnimationStart();
+        void onAnimationEnd();
     }
 
     public static class DefaultAnimatorListener implements AnimatorListener {

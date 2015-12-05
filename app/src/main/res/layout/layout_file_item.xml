@@ -5,19 +5,29 @@
     style="@style/Widget.AppCompat.Button"
     android:background="@drawable/button_ripple">
 
-    <FrameLayout
-        android:layout_width="86dp"
-        android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="96dp"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <CheckBox
+            android:id="@+id/file_item_choose_cb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:clickable="false"
+            style="@style/Widget.AppCompat.CompoundButton.CheckBox"
+            android:visibility="gone"/>
 
         <ImageView
             android:id="@+id/file_cover_iv"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginLeft="17dp"
-            android:layout_gravity="center_vertical"
             android:scaleType="fitXY"
             android:adjustViewBounds="true" />
-    </FrameLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -54,14 +64,4 @@
                 android:textColor="#878787"/>
         </RelativeLayout>
     </LinearLayout>
-    <CheckBox
-        android:id="@+id/file_item_choose_cb"
-        android:layout_marginRight="19dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:clickable="false"
-        style="@style/Widget.AppCompat.CompoundButton.CheckBox"
-        android:visibility="gone"/>
 </LinearLayout>

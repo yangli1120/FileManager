@@ -20,6 +20,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,7 +44,7 @@ import butterknife.ButterKnife;
 import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.animator.FabAnimatorHelper;
 import crazysheep.io.filemanager.animator.FabMenuAnimatorHelper;
-import crazysheep.io.filemanager.asynctask.FileScannerTask;
+import crazysheep.io.filemanager.asynctask.ScanDirTask;
 import crazysheep.io.filemanager.model.FileItemModel;
 import crazysheep.io.filemanager.model.ScanDirBean;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
@@ -232,12 +233,7 @@ public class MainActivity extends BaseActivity
                                 public void onClick(DialogInterface dialog) {
                                     DialogUtils.dismissDialog((Dialog)dialog);
 
-                                    for(FileItemModel item : chooseFiles) {
-                                        FileUtils.deleteFile(item.filepath);
-                                    }
-
-                                    // refresh UI
-                                    mFileAdapter.removeItems(chooseFiles);
+                                    requestToDeleteChosenFilesAndNotify();
                                 }
                             },
                             new DialogUtils.ButtonAction() {
@@ -255,10 +251,26 @@ public class MainActivity extends BaseActivity
             }break;
 
             case R.id.action_info_iv: {
-                if(hasChosenFiles())
-                    Snackbar.make(mFileRv,
-                            "info " + mFileAdapter.getChosenItems().size() + " item",
-                            Snackbar.LENGTH_SHORT).show();
+                if(hasChosenFiles()) {
+                    if(mFileAdapter.getChosenItems().size() == 1) {
+                        FileItemModel itemModel = mFileAdapter.getChosenItems().get(0);
+                        File chosenFile = new File(itemModel.filepath);
+
+                        View contentView = LayoutInflater.from(this).inflate(
+                                R.layout.dialog_file_info, null);
+                        TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
+                        fileTypeTv.setText(FileUtils.getMimeType(chosenFile));
+                        TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
+                        filePathTv.setText(chosenFile.getAbsolutePath());
+                        TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
+                        fileSizeTv.setText(FileUtils.formatFileSize(chosenFile.length()));
+                        TextView fileLastModifiedTv = ButterKnife.findById(contentView,
+                                R.id.file_last_modified_time_tv);
+                        fileLastModifiedTv.setText(DateUtils.formatTime(chosenFile.lastModified()));
+
+                        DialogUtils.showCustomDialog(this, contentView);
+                    }
+                }
             }break;
         }
     }
@@ -344,12 +356,12 @@ public class MainActivity extends BaseActivity
 
     private void toggleEditMode(boolean goEditMode) {
         if(goEditMode) {
-            invalidateOptionsMenu(); // recreate options menu
-
             mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
         } else {
             mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
         }
+
+        invalidateOptionsMenu(); // recreate options menu
     }
 
     @Override
@@ -394,16 +406,16 @@ public class MainActivity extends BaseActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        if(mFileAdapter != null && mFileAdapter.isEditingMode()) {
-            getMenuInflater().inflate(R.menu.edit_mode_menu, menu);
-        } else {
-            getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
 
+        if(!mFileAdapter.isEditingMode())
             menu.findItem(R.id.action_show_hidden_files)
                     .setTitle(mSettingsPrefs.getShowHiddenFiles()
                             ? R.string.action_not_show_hidden_files
-                            : R.string.action_show_hidden_files);
-        }
+                            : R.string.action_show_hidden_files)
+                    .setVisible(true);
+        else
+            menu.findItem(R.id.action_show_hidden_files).setVisible(false);
 
         return true;
     }
@@ -426,55 +438,6 @@ public class MainActivity extends BaseActivity
                 // update menu item title
                 item.setTitle(mSettingsPrefs.getShowHiddenFiles()
                         ? R.string.action_not_show_hidden_files : R.string.action_show_hidden_files);
-            }break;
-
-            /////////////////// edit mode ///////////////////
-            case R.id.action_delete: {
-                DialogUtils.showConfirmDialog(this, null,
-                        getString(R.string.msg_delete_items, mFileAdapter.getChosenItems().size()),
-                        new DialogUtils.ButtonAction() {
-                            @Override
-                            public String getTitle() {
-                                return getString(R.string.ok);
-                            }
-
-                            @Override
-                            public void onClick(DialogInterface dialog) {
-                                // delete items real
-                                requestToDeleteChosenFilesAndNotify();
-                            }
-                        },
-                        new DialogUtils.ButtonAction() {
-                            @Override
-                            public String getTitle() {
-                                return getString(R.string.cancel);
-                            }
-
-                            @Override
-                            public void onClick(DialogInterface dialog) {
-                            }
-                        });
-            }break;
-
-            case R.id.action_info: {
-                if(mFileAdapter.getChosenItems().size() == 1) {
-                    FileItemModel itemModel = mFileAdapter.getChosenItems().get(0);
-                    File chosenFile = new File(itemModel.filepath);
-
-                    View contentView = LayoutInflater.from(this).inflate(R.layout.dialog_file_info,
-                            null);
-                    TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
-                    fileTypeTv.setText(FileUtils.getMimeType(chosenFile));
-                    TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
-                    filePathTv.setText(chosenFile.getAbsolutePath());
-                    TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
-                    fileSizeTv.setText(FileUtils.formatFileSize(chosenFile.length()));
-                    TextView fileLastModifiedTv = ButterKnife.findById(contentView,
-                            R.id.file_last_modified_time_tv);
-                    fileLastModifiedTv.setText(DateUtils.formatTime(chosenFile.lastModified()));
-
-                    DialogUtils.showCustomDialog(this, contentView);
-                }
             }break;
         }
 
@@ -502,8 +465,8 @@ public class MainActivity extends BaseActivity
                             if (deleteResult)
                                 deleteItems.add(deleteItem);
 
-                            L.d(TAG, "okAction, delete file result: " + deleteResult
-                                    + ", delele file: " + deleteItem.filepath);
+                            L.d(TAG, "delete file result: " + deleteResult
+                                    + ", delete file: " + deleteItem.filepath);
                         }
 
                         mFileAdapter.removeItems(deleteItems);
@@ -545,17 +508,21 @@ public class MainActivity extends BaseActivity
         if(dirBean.dir.isDirectory() && dirBean.dir.exists()) {
             mCurrentDir = dirBean.dir;
 
-            new FileScannerTask(new FileScannerTask.OnScannerListener() {
-
+            ScanDirTask.doScan(mCurrentDir, new ScanDirTask.OnScanListener() {
                 @Override
-                public void onScanDone(List<FileItemModel> files) {
-                    // add parent directory
-                    mFileAdapter.setData(files);
+                public void onScanDone(List<FileItemModel> items) {
+                    mFileAdapter.setData(items);
 
                     mLayoutMgr.scrollToPositionWithOffset(dirBean.lastTopPosition,
                             dirBean.lastTopPositionOffset);
                 }
-            }).execute(mCurrentDir);
+
+                @Override
+                public void onError(String err) {
+                    if(!TextUtils.isEmpty(err))
+                        Snackbar.make(mFileRv, err, Snackbar.LENGTH_LONG).show();
+                }
+            });
         }
     }
 
