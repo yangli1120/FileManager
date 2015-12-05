@@ -5,25 +5,25 @@ import android.support.annotation.NonNull;
 import java.io.File;
 
 /**
- * a helper for create FileItemModel
+ * a helper for create FileItemDto
  *
  * Created by crazysheep on 15/11/20.
  */
-public class FileItemModelHelper {
+public class FileItemDtoHelper {
 
     /**
-     * create FileItemModel from target file
+     * create FileItemDto from target file
      * */
-    public static FileItemModel createFileItemModelFromFile(@NonNull File file) {
-        FileItemModel itemModel = new FileItemModel();
+    public static FileItemDto createFileItemModelFromFile(@NonNull File file) {
+        FileItemDto itemModel = new FileItemDto();
         itemModel.filename = file.getName();
         itemModel.filepath = file.getAbsolutePath();
-        itemModel.filetype = file.isDirectory() ? FileItemModel.TYPE_DIR : FileItemModel.TYPE_FILE;
+        itemModel.filetype = file.isDirectory() ? FileItemDto.TYPE_DIR : FileItemDto.TYPE_FILE;
         itemModel.isHidden = file.isHidden();
         itemModel.subfileCount = file.isDirectory()
-                ? file.listFiles().length : FileItemModel.ILLEGAL_SUBFILE_COUNT;
+                ? file.listFiles().length : FileItemDto.ILLEGAL_SUBFILE_COUNT;
         itemModel.fileByteCount = file.isDirectory()
-                ? FileItemModel.ILEGAL_FILE_BYTE_COUNT : file.length();
+                ? FileItemDto.ILEGAL_FILE_BYTE_COUNT : file.length();
         itemModel.fileLastModified = file.lastModified();
 
         return itemModel;

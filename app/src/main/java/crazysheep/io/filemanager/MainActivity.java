@@ -45,13 +45,16 @@ import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.animator.FabAnimatorHelper;
 import crazysheep.io.filemanager.animator.FabMenuAnimatorHelper;
 import crazysheep.io.filemanager.asynctask.ScanDirTask;
-import crazysheep.io.filemanager.model.FileItemModel;
-import crazysheep.io.filemanager.model.ScanDirBean;
+import crazysheep.io.filemanager.model.FileItemDto;
+import crazysheep.io.filemanager.model.MultiFileInfoDto;
+import crazysheep.io.filemanager.model.ScanDirDto;
+import crazysheep.io.filemanager.model.SingleFileInfoDto;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.L;
+import crazysheep.io.filemanager.utils.SnackBarUtils;
 import crazysheep.io.filemanager.utils.ViewUtils;
 import io.codetail.animation.arcanimator.Side;
 import io.codetail.widget.RevealFrameLayout;
@@ -59,6 +62,7 @@ import io.codetail.widget.RevealFrameLayout;
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
+    @Bind(android.R.id.content) View mRootView;
     @Bind(R.id.toolbar) Toolbar mToolbar;
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     @Bind(R.id.fab) FloatingActionButton mFab;
@@ -80,7 +84,7 @@ public class MainActivity extends BaseActivity
     private SettingsPrefs mSettingsPrefs;
 
     private File mCurrentDir;
-    private LinkedList<ScanDirBean> mFileStack = new LinkedList<>();
+    private LinkedList<ScanDirDto> mFileStack = new LinkedList<>();
 
     private static final int STATE_CLOSED = 0;
     private static final int STATE_ANIMATING = 1;
@@ -153,16 +157,16 @@ public class MainActivity extends BaseActivity
                     mFileAdapter.toggleItemChoose(position);
                 } else {
                     // click item file
-                    FileItemModel itemModel = mFileAdapter.getItem(position);
+                    FileItemDto itemModel = mFileAdapter.getItem(position);
                     File file = new File(itemModel.filepath);
                     if (file.isDirectory()) {
                         // save last directory first visible position and offset
                         int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
-                        ScanDirBean dirBean = new ScanDirBean(mCurrentDir, firstVisibleItemPosition,
+                        ScanDirDto dirBean = new ScanDirDto(mCurrentDir, firstVisibleItemPosition,
                                 mLayoutMgr.findViewByPosition(firstVisibleItemPosition).getTop());
                         mFileStack.push(dirBean);
 
-                        doScanDir(new ScanDirBean(file, 0, 0));
+                        doScanDir(new ScanDirDto(file, 0, 0));
                     } else {
                         Intent openIntent = new Intent(Intent.ACTION_VIEW);
                         openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -172,8 +176,8 @@ public class MainActivity extends BaseActivity
                         } catch (ActivityNotFoundException anfe) {
                             anfe.printStackTrace();
 
-                            Snackbar.make(mFileRv, R.string.msg_can_not_open_file,
-                                    Snackbar.LENGTH_LONG).show();
+                            SnackBarUtils.show(mRootView, R.string.msg_can_not_open_file,
+                                    Snackbar.LENGTH_LONG);
                         }
                     }
                 }
@@ -187,13 +191,13 @@ public class MainActivity extends BaseActivity
                 new PermissionsResultAction() {
                     @Override
                     public void onGranted() {
-                        doScanDir(new ScanDirBean(Environment.getExternalStorageDirectory(), 0, 0));
+                        doScanDir(new ScanDirDto(Environment.getExternalStorageDirectory(), 0, 0));
                     }
 
                     @Override
                     public void onDenied(String permission) {
-                        Snackbar.make(mFileRv, getString(R.string.msg_permission_denied),
-                                Snackbar.LENGTH_LONG).show();
+                        SnackBarUtils.show(mRootView, getString(R.string.msg_permission_denied),
+                                Snackbar.LENGTH_LONG);
                     }
                 });
     }
@@ -204,21 +208,21 @@ public class MainActivity extends BaseActivity
         switch (v.getId()) {
             case R.id.action_copy_iv: {
                 if(hasChosenFiles())
-                    Snackbar.make(mFileRv,
+                    SnackBarUtils.show(mRootView,
                             "copy " + mFileAdapter.getChosenItems().size() + " item",
-                            Snackbar.LENGTH_SHORT).show();
+                            Snackbar.LENGTH_SHORT);
             }break;
 
             case R.id.action_cut_iv: {
                 if(hasChosenFiles())
-                    Snackbar.make(mFileRv,
+                    SnackBarUtils.show(mRootView,
                             "cut " + mFileAdapter.getChosenItems().size() + " item",
-                            Snackbar.LENGTH_SHORT).show();
+                            Snackbar.LENGTH_SHORT);
             }break;
 
             case R.id.action_delete_iv: {
                 if(hasChosenFiles()) {
-                    final List<FileItemModel> chooseFiles = mFileAdapter.getChosenItems();
+                    final List<FileItemDto> chooseFiles = mFileAdapter.getChosenItems();
                     String dialogTitle = chooseFiles.size() == 1
                             ? getString(R.string.tv_delete_sing_file, chooseFiles.get(0).filename)
                                     : getString(R.string.tv_delete_files, chooseFiles.size());
@@ -252,24 +256,39 @@ public class MainActivity extends BaseActivity
 
             case R.id.action_info_iv: {
                 if(hasChosenFiles()) {
+                    View contentView = LayoutInflater.from(this).inflate(
+                            R.layout.dialog_file_info, null);
+                    TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
+                    TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
+                    TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
+                    TextView fileLastModifiedTv = ButterKnife.findById(contentView,
+                            R.id.file_last_modified_time_tv);
+                    // show file info dialog
                     if(mFileAdapter.getChosenItems().size() == 1) {
-                        FileItemModel itemModel = mFileAdapter.getChosenItems().get(0);
-                        File chosenFile = new File(itemModel.filepath);
+                        File file = new File(mFileAdapter.getChosenItems().get(0).filepath);
+                        SingleFileInfoDto fileInfoDto = FileUtils.parseFileInfo(file);
 
-                        View contentView = LayoutInflater.from(this).inflate(
-                                R.layout.dialog_file_info, null);
-                        TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
-                        fileTypeTv.setText(FileUtils.getMimeType(chosenFile));
-                        TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
-                        filePathTv.setText(chosenFile.getAbsolutePath());
-                        TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
-                        fileSizeTv.setText(FileUtils.formatFileSize(chosenFile.length()));
-                        TextView fileLastModifiedTv = ButterKnife.findById(contentView,
-                                R.id.file_last_modified_time_tv);
-                        fileLastModifiedTv.setText(DateUtils.formatTime(chosenFile.lastModified()));
+                        fileTypeTv.setText(file.isDirectory()
+                                ? getString(R.string.tv_file_dir) : fileInfoDto.filetype);
+                        filePathTv.setText(fileInfoDto.filepath);
+                        fileSizeTv.setText(FileUtils.formatFileSize(fileInfoDto.filesize));
+                        fileLastModifiedTv.setText(DateUtils.formatTime(fileInfoDto.lastmodified));
+                    } else if(mFileAdapter.getChosenItems().size() > 1) {
+                        List<File> files = new ArrayList<>(mFileAdapter.getChosenItems().size());
+                        for(FileItemDto item : mFileAdapter.getChosenItems())
+                            files.add(new File(item.filepath));
+                        MultiFileInfoDto fileInfoDto = FileUtils.parseFileInfo(files);
 
-                        DialogUtils.showCustomDialog(this, contentView);
+                        fileTypeTv.setText(getString(R.string.tv_multi_files,
+                                fileInfoDto.filecount));
+                        filePathTv.setText(getString(R.string.tv_multi_file_path,
+                                fileInfoDto.fileinfoList.get(0).filepath,
+                                fileInfoDto.fileinfoList.get(1).filepath));
+                        fileSizeTv.setText(FileUtils.formatFileSize(fileInfoDto.totalfilesize));
                     }
+
+                    DialogUtils.showCustomDialog(this, getString(R.string.tv_file_info),
+                            contentView);
                 }
             }break;
         }
@@ -277,8 +296,8 @@ public class MainActivity extends BaseActivity
 
     private boolean hasChosenFiles() {
         if(mFileAdapter.getChosenItems().size() == 0) {
-            Snackbar.make(mFileRv, R.string.msg_have_not_choose_file,
-                    Snackbar.LENGTH_LONG).show();
+            SnackBarUtils.show(mRootView, R.string.msg_have_not_choose_file,
+                    Snackbar.LENGTH_LONG);
 
             return false;
         }
@@ -459,8 +478,8 @@ public class MainActivity extends BaseActivity
                 new PermissionsResultAction() {
                     @Override
                     public void onGranted() {
-                        List<FileItemModel> deleteItems = new ArrayList<>();
-                        for (FileItemModel deleteItem : mFileAdapter.getChosenItems()) {
+                        List<FileItemDto> deleteItems = new ArrayList<>();
+                        for (FileItemDto deleteItem : mFileAdapter.getChosenItems()) {
                             boolean deleteResult = FileUtils.deleteFile(deleteItem.filepath);
                             if (deleteResult)
                                 deleteItems.add(deleteItem);
@@ -474,8 +493,8 @@ public class MainActivity extends BaseActivity
 
                     @Override
                     public void onDenied(String permission) {
-                        Snackbar.make(mFileRv, getString(R.string.msg_permission_denied),
-                                Snackbar.LENGTH_LONG).show();
+                        SnackBarUtils.show(mRootView, getString(R.string.msg_permission_denied),
+                                Snackbar.LENGTH_LONG);
                     }
                 });
     }
@@ -488,15 +507,15 @@ public class MainActivity extends BaseActivity
                     public void onInput(DialogInterface dialog, final String s) {
                         final File newFolder = new File(mCurrentDir, s);
                         if (newFolder.exists()) {
-                            Snackbar.make(mFileRv, R.string.msg_folder_is_exist,
-                                    Snackbar.LENGTH_LONG).show();
+                            SnackBarUtils.show(mRootView, R.string.msg_folder_is_exist,
+                                    Snackbar.LENGTH_LONG);
 
                             return;
                         }
 
                         if(newFolder.mkdirs()) {
                             // refresh current dir
-                            doScanDir(new ScanDirBean(mCurrentDir, 0, 0));
+                            doScanDir(new ScanDirDto(mCurrentDir, 0, 0));
 
                             // TODO for good UX, auto select the new folder
                         }
@@ -504,13 +523,13 @@ public class MainActivity extends BaseActivity
                 });
     }
 
-    private void doScanDir(final ScanDirBean dirBean) {
+    private void doScanDir(final ScanDirDto dirBean) {
         if(dirBean.dir.isDirectory() && dirBean.dir.exists()) {
             mCurrentDir = dirBean.dir;
 
             ScanDirTask.doScan(mCurrentDir, new ScanDirTask.OnScanListener() {
                 @Override
-                public void onScanDone(List<FileItemModel> items) {
+                public void onScanDone(List<FileItemDto> items) {
                     mFileAdapter.setData(items);
 
                     mLayoutMgr.scrollToPositionWithOffset(dirBean.lastTopPosition,
@@ -520,7 +539,7 @@ public class MainActivity extends BaseActivity
                 @Override
                 public void onError(String err) {
                     if(!TextUtils.isEmpty(err))
-                        Snackbar.make(mFileRv, err, Snackbar.LENGTH_LONG).show();
+                        SnackBarUtils.show(mRootView, err, Snackbar.LENGTH_LONG);
                 }
             });
         }

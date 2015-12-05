@@ -19,7 +19,7 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import crazysheep.io.filemanager.R;
-import crazysheep.io.filemanager.model.FileItemModel;
+import crazysheep.io.filemanager.model.FileItemDto;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 
@@ -39,15 +39,15 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     private int mEditMode = EDIT_MODE_NORMAL;
 
     private Context mContext;
-    private List<FileItemModel> mAllFiles;
-    private List<FileItemModel> mFiles;
+    private List<FileItemDto> mAllFiles;
+    private List<FileItemDto> mFiles;
     private LayoutInflater mInflater;
     private SparseArray<Boolean> mChooseFileMap;
 
     private OnItemClickListener mOnItemClickListener;
     private OnItemLongClickListener mOnItemLongClickListener;
 
-    public FilesAdapter(Context context, List<FileItemModel> files, int hiddenMode) {
+    public FilesAdapter(Context context, List<FileItemDto> files, int hiddenMode) {
         mContext = context;
         mAllFiles = files;
         mCurrentMode = hiddenMode;
@@ -61,7 +61,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         resetItemChooseState();
     }
 
-    public void setData(List<FileItemModel> files) {
+    public void setData(List<FileItemDto> files) {
         mAllFiles = files;
         if(mAllFiles == null)
             mAllFiles = new ArrayList<>();
@@ -110,8 +110,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             mChooseFileMap.put(i, false);
     }
 
-    public List<FileItemModel> getChosenItems() {
-        List<FileItemModel> chosenItems = new ArrayList<>();
+    public List<FileItemDto> getChosenItems() {
+        List<FileItemDto> chosenItems = new ArrayList<>();
         for(int i = 0; i < mChooseFileMap.size(); i++)
             if(mChooseFileMap.valueAt(i))
                 chosenItems.add(mFiles.get(mChooseFileMap.keyAt(i)));
@@ -119,8 +119,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         return chosenItems;
     }
 
-    public void removeItems(@NonNull List<FileItemModel> items) {
-        for(FileItemModel item : items) {
+    public void removeItems(@NonNull List<FileItemDto> items) {
+        for(FileItemDto item : items) {
             int removeIndex = mFiles.indexOf(item);
             mFiles.remove(item);
             mAllFiles.remove(item);
@@ -148,7 +148,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
     @Override
     public void onBindViewHolder(FileHolder holder, int position) {
-        FileItemModel itemModel = mFiles.get(position);
+        FileItemDto itemModel = mFiles.get(position);
         if(itemModel.isDir())
             holder.mFileCoverIv.setImageResource(R.drawable.ic_folder_blue);
         else
@@ -157,7 +157,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         holder.mFileNameTv.setText(itemModel.filename);
         if(itemModel.isDir())
             holder.mFileSubCountTv.setText(
-                    itemModel.subfileCount != FileItemModel.ILLEGAL_SUBFILE_COUNT
+                    itemModel.subfileCount != FileItemDto.ILLEGAL_SUBFILE_COUNT
                             ? mContext.getString(R.string.tv_file_sub_count, itemModel.subfileCount)
                                     : null);
         else
@@ -207,14 +207,14 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         return mFiles.size();
     }
 
-    public FileItemModel getItem(int position) {
+    public FileItemDto getItem(int position) {
         return mFiles.get(position);
     }
 
     private void sortFiles() {
-        List<FileItemModel> dirs = new ArrayList<>();
-        List<FileItemModel> files = new ArrayList<>();
-        for(FileItemModel itemModel : mAllFiles)
+        List<FileItemDto> dirs = new ArrayList<>();
+        List<FileItemDto> files = new ArrayList<>();
+        for(FileItemDto itemModel : mAllFiles)
             if(itemModel.isDir())
                 dirs.add(itemModel);
             else
@@ -225,16 +225,16 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         // second sort files
         Collections.sort(files, new FileComparator());
 
-        List<FileItemModel> totalFiles = new ArrayList<>(mAllFiles.size());
+        List<FileItemDto> totalFiles = new ArrayList<>(mAllFiles.size());
         totalFiles.addAll(dirs);
         totalFiles.addAll(files);
         mAllFiles = totalFiles;
     }
 
-    private static class FileComparator implements Comparator<FileItemModel> {
+    private static class FileComparator implements Comparator<FileItemDto> {
 
         @Override
-        public int compare(FileItemModel lhs, FileItemModel rhs) {
+        public int compare(FileItemDto lhs, FileItemDto rhs) {
             return lhs.filename.compareTo(rhs.filename);
         }
     }
@@ -244,7 +244,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             mFiles = mAllFiles;
         } else {
             mFiles = new ArrayList<>();
-            for(FileItemModel itemModel : mAllFiles)
+            for(FileItemDto itemModel : mAllFiles)
                 if(!itemModel.isHidden())
                     mFiles.add(itemModel);
         }

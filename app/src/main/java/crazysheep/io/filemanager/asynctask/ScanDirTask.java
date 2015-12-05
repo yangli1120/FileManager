@@ -6,8 +6,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import crazysheep.io.filemanager.model.FileItemModel;
-import crazysheep.io.filemanager.model.FileItemModelHelper;
+import crazysheep.io.filemanager.model.FileItemDto;
+import crazysheep.io.filemanager.model.FileItemDtoHelper;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -23,7 +23,7 @@ import rx.schedulers.Schedulers;
 public class ScanDirTask {
 
     public interface OnScanListener {
-        void onScanDone(List<FileItemModel> items);
+        void onScanDone(List<FileItemDto> items);
         void onError(String err);
     }
 
@@ -35,24 +35,24 @@ public class ScanDirTask {
         Observable
                 .just(dir)
                 .subscribeOn(Schedulers.io())
-                .map(new Func1<File, List<FileItemModel>>() {
+                .map(new Func1<File, List<FileItemDto>>() {
                     @Override
-                    public List<FileItemModel> call(File targetFile) {
+                    public List<FileItemDto> call(File targetFile) {
                         if(targetFile == null)
                             throw OnErrorThrowable.from(new Error("target scan directory is NULL"));
 
                         if(!targetFile.isDirectory())
                             throw OnErrorThrowable.from(new Error("target file is NOT a directory"));
 
-                        List<FileItemModel> files = new ArrayList<>();
+                        List<FileItemDto> files = new ArrayList<>();
                         for(File file : targetFile.listFiles())
-                            files.add(FileItemModelHelper.createFileItemModelFromFile(file));
+                            files.add(FileItemDtoHelper.createFileItemModelFromFile(file));
 
                         return files;
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<List<FileItemModel>>() {
+                .subscribe(new Subscriber<List<FileItemDto>>() {
                     @Override
                     public void onCompleted() {
                     }
@@ -63,7 +63,7 @@ public class ScanDirTask {
                     }
 
                     @Override
-                    public void onNext(List<FileItemModel> fileItemModels) {
+                    public void onNext(List<FileItemDto> fileItemModels) {
                         listener.onScanDone(fileItemModels);
                     }
                 });

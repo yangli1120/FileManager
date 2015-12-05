@@ -9,6 +9,8 @@ import android.view.View;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 
+import crazysheep.io.filemanager.R;
+
 /**
  * dialog utils
  * <p/>
@@ -68,7 +70,7 @@ public class DialogUtils {
                 .input(hint, null, false, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                        if(callback != null)
+                        if (callback != null)
                             callback.onInput(dialog, input.toString());
                     }
                 })
@@ -85,9 +87,19 @@ public class DialogUtils {
     /**
      * show custom dialog
      * */
-    public static Dialog showCustomDialog(Activity activity, @NonNull View contentView) {
+    public static Dialog showCustomDialog(Activity activity, String title,
+                                          @NonNull View contentView) {
         Dialog dialog = new MaterialDialog.Builder(activity)
-                .customView(contentView, false)
+                .title(title)
+                .customView(contentView, true)
+                .positiveText(R.string.ok)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog,
+                                        @NonNull DialogAction which) {
+                        dismissDialog(dialog);
+                    }
+                })
                 .build();
         dialog.setOwnerActivity(activity);
 

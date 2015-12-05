@@ -9,13 +9,13 @@ import java.io.File;
  *
  * Created by crazysheep on 15/12/4.
  */
-public class ScanDirBean {
+public class ScanDirDto {
 
     public File dir;
     public int lastTopPosition = 0;
     public int lastTopPositionOffset = 0;
 
-    public ScanDirBean(@NonNull File dir, int topPosition, int topPositionOffset) {
+    public ScanDirDto(@NonNull File dir, int topPosition, int topPositionOffset) {
         this.dir = dir;
         this.lastTopPosition = topPosition;
         this.lastTopPositionOffset = topPositionOffset;

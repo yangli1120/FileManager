@@ -11,7 +11,7 @@ import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
  * Created by crazysheep on 15/11/12.
  */
 @ParcelablePlease
-public class FileItemModel implements Parcelable {
+public class FileItemDto implements Parcelable {
 
     public static final int TYPE_DIR = 0;
     public static final int TYPE_FILE = 1;
@@ -42,18 +42,19 @@ public class FileItemModel implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        FileItemModelParcelablePlease.writeToParcel(this, dest, flags);
+        FileItemDtoParcelablePlease.writeToParcel(this, dest, flags);
     }
 
-    public static final Creator<FileItemModel> CREATOR = new Creator<FileItemModel>() {
-        public FileItemModel createFromParcel(Parcel source) {
-            FileItemModel target = new FileItemModel();
-            FileItemModelParcelablePlease.readFromParcel(target, source);
+    public static final Creator<FileItemDto> CREATOR = new Creator<FileItemDto>() {
+        public FileItemDto createFromParcel(Parcel source) {
+            FileItemDto target = new FileItemDto();
+            FileItemDtoParcelablePlease.readFromParcel(target, source);
             return target;
         }
 
-        public FileItemModel[] newArray(int size) {
-            return new FileItemModel[size];
+        public FileItemDto[] newArray(int size) {
+            return new FileItemDto[size];
         }
     };
+
 }

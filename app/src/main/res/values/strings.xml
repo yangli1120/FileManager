@@ -33,5 +33,10 @@
     <string name="tv_create_folder">Create a new folder</string>
     <string name="tv_delete_files">Will delete %s files</string>
     <string name="tv_delete_sing_file">Will delete \'%s\'</string>
+    <string name="tv_file_info">File info</string>
+    <string name="tv_multi_files">%s files</string>
+    <string name="tv_multi_file_path">%1$s\n%2$s...</string>
+
+    <string name="tv_file_dir">folder</string>
 
 </resources>

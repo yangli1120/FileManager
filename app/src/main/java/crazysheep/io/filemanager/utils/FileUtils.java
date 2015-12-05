@@ -6,6 +6,13 @@ import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+
+import crazysheep.io.filemanager.model.FileInfoDto;
+import crazysheep.io.filemanager.model.MultiFileInfoDto;
+import crazysheep.io.filemanager.model.SingleFileInfoDto;
+import rx.Observable;
+import rx.functions.Action1;
 
 /**
  * file utils
@@ -104,6 +111,32 @@ public class FileUtils {
             }
 
         return false;
+    }
+
+    /**
+     * parse single file info
+     * */
+    public static SingleFileInfoDto parseFileInfo(@NonNull File file) {
+        return SingleFileInfoDto.parseInfoFromFile(file);
+    }
+
+    /**
+     * parse multi files info
+     * */
+    public static MultiFileInfoDto parseFileInfo(@NonNull List<File> files) {
+        final MultiFileInfoDto multiInfoDto = new MultiFileInfoDto();
+        Observable.from(files)
+                .subscribe(new Action1<File>() {
+                    @Override
+                    public void call(File file) {
+                        multiInfoDto.filecount++;
+                        SingleFileInfoDto fileInfo = SingleFileInfoDto.parseInfoFromFile(file);
+                        multiInfoDto.totalfilesize += fileInfo.filesize;
+                        multiInfoDto.addSingleFileInfo(fileInfo);
+                    }
+                });
+
+        return multiInfoDto;
     }
 
 }
