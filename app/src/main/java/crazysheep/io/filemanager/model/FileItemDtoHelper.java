@@ -3,6 +3,8 @@ package crazysheep.io.filemanager.model;
 import android.support.annotation.NonNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * a helper for create FileItemDto
@@ -28,4 +30,23 @@ public class FileItemDtoHelper {
 
         return itemModel;
     }
+
+    /**
+     * change FileItemDto to File
+     * */
+    public static File changeItem2File(@NonNull FileItemDto itemDto) {
+        return new File(itemDto.filepath);
+    }
+
+    /**
+     * change List<FileItemDto> to List<File>
+     * */
+    public static List<File> changeItems2Files(@NonNull List<FileItemDto> itemDtos) {
+        List<File> files = new ArrayList<>(itemDtos.size());
+        for(FileItemDto itemDto : itemDtos)
+            files.add(changeItem2File(itemDto));
+
+        return files;
+    }
+
 }

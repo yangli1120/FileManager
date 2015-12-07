@@ -45,7 +45,9 @@ import crazysheep.io.filemanager.adapter.FilesAdapter;
 import crazysheep.io.filemanager.animator.FabAnimatorHelper;
 import crazysheep.io.filemanager.animator.FabMenuAnimatorHelper;
 import crazysheep.io.filemanager.asynctask.ScanDirTask;
+import crazysheep.io.filemanager.io.FileIO;
 import crazysheep.io.filemanager.model.FileItemDto;
+import crazysheep.io.filemanager.model.FileItemDtoHelper;
 import crazysheep.io.filemanager.model.MultiFileInfoDto;
 import crazysheep.io.filemanager.model.ScanDirDto;
 import crazysheep.io.filemanager.model.SingleFileInfoDto;
@@ -63,6 +65,7 @@ public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
     @Bind(android.R.id.content) View mRootView;
+    @Bind(R.id.snackbar_holder_v) View mPlaceHolderV;
     @Bind(R.id.toolbar) Toolbar mToolbar;
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     @Bind(R.id.fab) FloatingActionButton mFab;
@@ -90,6 +93,8 @@ public class MainActivity extends BaseActivity
     private static final int STATE_ANIMATING = 1;
     private static final int STATE_EXPANDED = 2;
     private int mFabState = STATE_CLOSED;
+
+    private Snackbar mSnackBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,10 +219,31 @@ public class MainActivity extends BaseActivity
             }break;
 
             case R.id.action_cut_iv: {
-                if(hasChosenFiles())
-                    SnackBarUtils.show(mRootView,
-                            "cut " + mFileAdapter.getChosenItems().size() + " item",
-                            Snackbar.LENGTH_SHORT);
+                if(hasChosenFiles()) {
+                    // back to normal mode
+                    reverseAnimateFab();
+
+                    // move file
+                    final List<File> sources = FileItemDtoHelper.changeItems2Files(
+                            mFileAdapter.getChosenItems());
+                    String actionMsg = getString(R.string.msg_choose_directory_to_move_files,
+                            mFileAdapter.getChosenItems().size());
+                    mSnackBar = Snackbar.make(mRootView, actionMsg, Snackbar.LENGTH_INDEFINITE)
+                            .setAction(R.string.action_paste, new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    moveFile(sources, mCurrentDir);
+                                }
+                            });
+                    mSnackBar.getView().setOnClickListener(new View.OnClickListener() {
+
+                        @Override
+                        public void onClick(View v) {
+                            SnackBarUtils.dismiss(mSnackBar);
+                        }
+                    });
+                    mSnackBar.show();
+                }
             }break;
 
             case R.id.action_delete_iv: {
@@ -331,6 +357,7 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onAnimationEnd() {
                         mFabState = STATE_EXPANDED;
+                        mPlaceHolderV.setVisibility(View.VISIBLE);
 
                         toggleEditMode(true);
                     }
@@ -365,6 +392,7 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onAnimationEnd() {
                         mFabState = STATE_CLOSED;
+                        mPlaceHolderV.setVisibility(View.GONE);
 
                         toggleEditMode(false);
                     }
@@ -396,6 +424,8 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(mSnackBar != null && mSnackBar.isShown()) {
+            SnackBarUtils.dismiss(mSnackBar);
         } else if(mMenuAnimatorBuilder.isExpanded()) {
             mMenuAnimatorBuilder.closed();
         } else if(mFabState == STATE_ANIMATING) {
@@ -424,7 +454,6 @@ public class MainActivity extends BaseActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
 
         if(!mFileAdapter.isEditingMode())
@@ -441,12 +470,8 @@ public class MainActivity extends BaseActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         switch (id) {
             case R.id.action_show_hidden_files: {
                 mSettingsPrefs.setShowHiddenFiles(!mSettingsPrefs.getShowHiddenFiles());
@@ -513,7 +538,7 @@ public class MainActivity extends BaseActivity
                             return;
                         }
 
-                        if(newFolder.mkdirs()) {
+                        if (newFolder.mkdirs()) {
                             // refresh current dir
                             doScanDir(new ScanDirDto(mCurrentDir, 0, 0));
 
@@ -543,6 +568,36 @@ public class MainActivity extends BaseActivity
                 }
             });
         }
+    }
+
+    private void refreshCurDir() {
+        doScanDir(new ScanDirDto(mCurrentDir, 0, 0));
+    }
+
+    private void moveFile(@NonNull List<File> sources, @NonNull File targetDir) {
+        FileIO.move(sources, targetDir, new FileIO.OnIOActionListener() {
+            @Override
+            public void onSuccess() {
+                refreshCurDir();
+            }
+
+            @Override
+            public void onError(String err) {
+                DialogUtils.showConfirmDialog(getActivity(), null, err,
+                        new DialogUtils.ButtonAction() {
+                            @Override
+                            public String getTitle() {
+                                return getString(R.string.ok);
+                            }
+
+                            @Override
+                            public void onClick(DialogInterface dialog) {
+                                DialogUtils.dismissDialog((Dialog) dialog);
+                            }
+                        },
+                        null);
+            }
+        });
     }
 
 }

@@ -74,7 +74,7 @@
     <io.codetail.widget.RevealFrameLayout
         android:id="@+id/fab_sheet_rfl"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="48dp"
         android:layout_gravity="bottom"
         android:gravity="bottom"
         android:visibility="gone">

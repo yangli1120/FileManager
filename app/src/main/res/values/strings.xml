@@ -11,11 +11,13 @@
     <string name="action_info">Info</string>
     <string name="action_mode_choose">Edit</string>
     <string name="action_new_folder">New folder</string>
+    <string name="action_paste">Paste</string>
 
     <string name="msg_can_not_open_file">Can not open target file</string>
     <string name="msg_delete_items">Delete %s items?</string>
     <string name="msg_permission_denied">Request permission failed!</string>
     <string name="msg_have_not_choose_file">No file chosen</string>
+    <string name="msg_choose_directory_to_move_files">%d files been chosen</string>
 
     <string name="msg_folder_is_exist">This folder is exist</string>
 

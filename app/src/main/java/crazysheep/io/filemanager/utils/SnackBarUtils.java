@@ -25,4 +25,9 @@ public class SnackBarUtils {
         Snackbar.make(attach, res, time).show();
     }
 
+    public static void dismiss(Snackbar snackbar) {
+        if(snackbar != null && snackbar.isShownOrQueued())
+            snackbar.dismiss();
+    }
+
 }
