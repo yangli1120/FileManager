@@ -65,7 +65,6 @@ public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
     @Bind(android.R.id.content) View mRootView;
-    @Bind(R.id.snackbar_holder_v) View mPlaceHolderV;
     @Bind(R.id.toolbar) Toolbar mToolbar;
     @Bind(R.id.file_rv) RecyclerView mFileRv;
     @Bind(R.id.fab) FloatingActionButton mFab;
@@ -209,13 +208,33 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onClick(View v) {
-        // TODO
         switch (v.getId()) {
             case R.id.action_copy_iv: {
-                if(hasChosenFiles())
-                    SnackBarUtils.show(mRootView,
-                            "copy " + mFileAdapter.getChosenItems().size() + " item",
-                            Snackbar.LENGTH_SHORT);
+                if(hasChosenFiles()) {
+                    // back to normal mode
+                    reverseAnimateFab();
+
+                    // copy file
+                    final List<File> sources = FileItemDtoHelper.changeItems2Files(
+                            mFileAdapter.getChosenItems());
+                    String actioMsg = getString(R.string.msg_choose_directory_to_copy_files,
+                            sources.size());
+                    mSnackBar = Snackbar.make(mRootView, actioMsg, Snackbar.LENGTH_INDEFINITE)
+                            .setAction(R.string.action_paste, new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    copyFile(sources, mCurrentDir);
+                                }
+                            });
+                    mSnackBar.getView().setOnClickListener(new View.OnClickListener() {
+
+                        @Override
+                        public void onClick(View v) {
+                            SnackBarUtils.dismiss(mSnackBar);
+                        }
+                    });
+                    mSnackBar.show();
+                }
             }break;
 
             case R.id.action_cut_iv: {
@@ -227,7 +246,7 @@ public class MainActivity extends BaseActivity
                     final List<File> sources = FileItemDtoHelper.changeItems2Files(
                             mFileAdapter.getChosenItems());
                     String actionMsg = getString(R.string.msg_choose_directory_to_move_files,
-                            mFileAdapter.getChosenItems().size());
+                            sources.size());
                     mSnackBar = Snackbar.make(mRootView, actionMsg, Snackbar.LENGTH_INDEFINITE)
                             .setAction(R.string.action_paste, new View.OnClickListener() {
                                 @Override
@@ -357,7 +376,6 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onAnimationEnd() {
                         mFabState = STATE_EXPANDED;
-                        mPlaceHolderV.setVisibility(View.VISIBLE);
 
                         toggleEditMode(true);
                     }
@@ -392,7 +410,6 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onAnimationEnd() {
                         mFabState = STATE_CLOSED;
-                        mPlaceHolderV.setVisibility(View.GONE);
 
                         toggleEditMode(false);
                     }
@@ -540,7 +557,7 @@ public class MainActivity extends BaseActivity
 
                         if (newFolder.mkdirs()) {
                             // refresh current dir
-                            doScanDir(new ScanDirDto(mCurrentDir, 0, 0));
+                            refreshCurDir();
 
                             // TODO for good UX, auto select the new folder
                         }
@@ -583,19 +600,21 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onError(String err) {
-                DialogUtils.showConfirmDialog(getActivity(), null, err,
-                        new DialogUtils.ButtonAction() {
-                            @Override
-                            public String getTitle() {
-                                return getString(R.string.ok);
-                            }
+                DialogUtils.showSingleConfirmDialog(getActivity(), null, err);
+            }
+        });
+    }
 
-                            @Override
-                            public void onClick(DialogInterface dialog) {
-                                DialogUtils.dismissDialog((Dialog) dialog);
-                            }
-                        },
-                        null);
+    private void copyFile(@NonNull List<File> sources, @NonNull File targetDir) {
+        FileIO.copy(sources, targetDir, new FileIO.OnIOActionListener() {
+            @Override
+            public void onSuccess() {
+                refreshCurDir();
+            }
+
+            @Override
+            public void onError(String err) {
+                DialogUtils.showSingleConfirmDialog(getActivity(), null, err);
             }
         });
     }

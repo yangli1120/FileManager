@@ -28,7 +28,7 @@ public class DialogUtils {
         void onInput(DialogInterface dialog, String s);
     }
 
-    public static Dialog showConfirmDialog(Activity activity, String title, String content,
+    public static Dialog showConfirmDialog(@NonNull Activity activity, String title, String content,
                                            final ButtonAction okAction,
                                            final ButtonAction cancelAction) {
         MaterialDialog dialog = new MaterialDialog.Builder(activity)
@@ -60,6 +60,23 @@ public class DialogUtils {
         return dialog;
     }
 
+    public static Dialog showSingleConfirmDialog(@NonNull final Activity activity, String title,
+                                                 String content) {
+        return showConfirmDialog(activity, title, content,
+                new ButtonAction() {
+                    @Override
+                    public String getTitle() {
+                        return activity.getString(R.string.ok);
+                    }
+
+                    @Override
+                    public void onClick(DialogInterface dialog) {
+                        dismissDialog((Dialog) dialog);
+                    }
+                },
+                null);
+    }
+
     /**
      * show input dialog
      * */
@@ -87,7 +104,7 @@ public class DialogUtils {
     /**
      * show custom dialog
      * */
-    public static Dialog showCustomDialog(Activity activity, String title,
+    public static Dialog showCustomDialog(@NonNull Activity activity, String title,
                                           @NonNull View contentView) {
         Dialog dialog = new MaterialDialog.Builder(activity)
                 .title(title)

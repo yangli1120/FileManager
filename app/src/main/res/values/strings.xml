@@ -17,7 +17,8 @@
     <string name="msg_delete_items">Delete %s items?</string>
     <string name="msg_permission_denied">Request permission failed!</string>
     <string name="msg_have_not_choose_file">No file chosen</string>
-    <string name="msg_choose_directory_to_move_files">%d files been chosen</string>
+    <string name="msg_choose_directory_to_move_files">Move %d files to</string>
+    <string name="msg_choose_directory_to_copy_files">Copy %d files to</string>
 
     <string name="msg_folder_is_exist">This folder is exist</string>
 

@@ -170,6 +170,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             holder.mFileChooseCb.setVisibility(View.GONE);
         }
 
+        if(isFooter(holder.getAdapterPosition()))
+            holder.mFooterBlankSpaceV.setVisibility(View.VISIBLE);
+        else
+            holder.mFooterBlankSpaceV.setVisibility(View.GONE);
+
         updateClickListener(holder);
     }
 
@@ -193,7 +198,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
             @Override
             public boolean onLongClick(View v) {
-                if(mOnItemLongClickListener != null)
+                if (mOnItemLongClickListener != null)
                     mOnItemLongClickListener.onLongClick(holder.getAdapterPosition(),
                             holder.itemView);
 
@@ -209,6 +214,10 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
     public FileItemDto getItem(int position) {
         return mFiles.get(position);
+    }
+
+    public boolean isFooter(int position) {
+        return position == getItemCount() - 1;
     }
 
     private void sortFiles() {
@@ -250,12 +259,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         }
     }
 
-    public static interface OnItemClickListener {
-        public void onClick(int position, View view);
+    public interface OnItemClickListener {
+        void onClick(int position, View view);
     }
 
-    public static interface OnItemLongClickListener {
-        public boolean onLongClick(int position, View view);
+    public interface OnItemLongClickListener {
+        boolean onLongClick(int position, View view);
     }
 
     ///////////////////////////// ViewHolder //////////////////////////////////
@@ -267,6 +276,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         @Bind(R.id.file_sub_count_tv) TextView mFileSubCountTv;
         @Bind(R.id.file_last_modified_time_tv) TextView mFileLastModifiedTimeTv;
         @Bind(R.id.file_item_choose_cb) CheckBox mFileChooseCb;
+        @Bind(R.id.footer_blank_space) View mFooterBlankSpaceV;
 
         public FileHolder(View view) {
             super(view);

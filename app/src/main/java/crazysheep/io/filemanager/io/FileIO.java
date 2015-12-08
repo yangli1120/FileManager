@@ -72,4 +72,48 @@ public class FileIO {
                 });
     }
 
+    /**
+     * copy files to target directory
+     * */
+    public static void copy(@NonNull List<File> sources, @NonNull final File targetDir,
+                     final OnIOActionListener listener) {
+        Observable.from(sources)
+                .subscribeOn(Schedulers.io())
+                .map(new Func1<File, Boolean>() {
+                    @Override
+                    public Boolean call(File file) {
+                        try {
+                            if (file.isDirectory())
+                                FileUtils.copyDirectoryToDirectory(file, targetDir);
+                            else
+                                FileUtils.copyFileToDirectory(file, targetDir);
+                        } catch (IOException | NullPointerException e) {
+                            e.printStackTrace();
+
+                            throw OnErrorThrowable.from(e);
+                        }
+
+                        return Boolean.TRUE;
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Boolean>() {
+                    @Override
+                    public void onCompleted() {
+                        if(listener != null)
+                            listener.onSuccess();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        if (listener != null && e != null)
+                            listener.onError(e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(Boolean aBoolean) {
+                    }
+                });
+    }
+
 }
