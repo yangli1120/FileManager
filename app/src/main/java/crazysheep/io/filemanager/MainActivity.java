@@ -26,8 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -57,8 +55,6 @@ import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.L;
 import crazysheep.io.filemanager.utils.SnackBarUtils;
-import crazysheep.io.filemanager.utils.ViewUtils;
-import io.codetail.animation.arcanimator.Side;
 import io.codetail.widget.RevealFrameLayout;
 
 public class MainActivity extends BaseActivity
@@ -80,6 +76,7 @@ public class MainActivity extends BaseActivity
     @Bind(R.id.edit_mode_fab) FloatingActionButton mEditModeFab;
 
     private FabMenuAnimatorHelper.Builder mMenuAnimatorBuilder;
+    private FabAnimatorHelper.Builder mFabAnimatorBuilder;
 
     private LinearLayoutManager mLayoutMgr;
     private FilesAdapter mFileAdapter;
@@ -87,11 +84,6 @@ public class MainActivity extends BaseActivity
 
     private File mCurrentDir;
     private LinkedList<ScanDirDto> mFileStack = new LinkedList<>();
-
-    private static final int STATE_CLOSED = 0;
-    private static final int STATE_ANIMATING = 1;
-    private static final int STATE_EXPANDED = 2;
-    private int mFabState = STATE_CLOSED;
 
     private Snackbar mSnackBar;
 
@@ -118,6 +110,20 @@ public class MainActivity extends BaseActivity
     }
 
     private void initUI() {
+        mFabAnimatorBuilder = FabAnimatorHelper.wrap(mFab, mFabSheetCv, mFabRevealFl)
+                .setExpandedListener(new FabAnimatorHelper.DefaultAnimatorListener() {
+                    @Override
+                    public void onAnimationEnd() {
+                        super.onAnimationEnd();
+                        toggleEditMode(true);
+                    }
+                })
+                .setClosedListener(new FabAnimatorHelper.DefaultAnimatorListener() {
+                    @Override
+                    public void onAnimationEnd() {
+                        toggleEditMode(false);
+                    }
+                });
         mMenuAnimatorBuilder = FabMenuAnimatorHelper.wrap(mFabMenuRevealLl, mFabMenuParentFl, mFab)
                 .addFab(mCreateFolderFab, R.id.create_folder_fab)
                 .addFab(mEditModeFab, R.id.edit_mode_fab)
@@ -339,6 +345,16 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    private void toggleEditMode(boolean goEditMode) {
+        if(goEditMode) {
+             mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
+        } else {
+            mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
+        }
+
+        invalidateOptionsMenu(); // recreate options menu
+    }
+
     private boolean hasChosenFiles() {
         if(mFileAdapter.getChosenItems().size() == 0) {
             SnackBarUtils.show(mRootView, R.string.msg_have_not_choose_file,
@@ -351,81 +367,11 @@ public class MainActivity extends BaseActivity
     }
 
     private void animateFab() {
-        mFabState = STATE_ANIMATING;
-
-        FabAnimatorHelper.wrap(mFab, mFabSheetCv)
-                .arc(ViewUtils.getRelativeLeft(mFabSheetCv) + mFabSheetCv.getWidth() / 2,
-                        ViewUtils.getRelativeTop(mFabSheetCv) + mFabSheetCv.getHeight() / 2,
-                        270f, Side.RIGHT)
-                .setArcDuration(150)
-                .setArcInterpolator(new AccelerateInterpolator())
-                .listenArc(new FabAnimatorHelper.DefaultAnimatorListener() {
-                    @Override
-                    public void onAnimationEnd() {
-                        mFabRevealFl.setVisibility(View.VISIBLE);
-                        mFab.setVisibility(View.GONE);
-                    }
-                })
-                .reveal(mFabSheetCv.getLeft() + mFabSheetCv.getWidth() / 2,
-                        mFabSheetCv.getTop() + mFabSheetCv.getHeight() / 2,
-                        (float) Math.hypot(mFab.getWidth(), mFab.getHeight()),
-                        (float) Math.hypot(mFabSheetCv.getWidth(), mFabSheetCv.getHeight()))
-                .setRevealDuration(200)
-                .setRevealInterpolator(new AccelerateDecelerateInterpolator())
-                .listenReveal(new FabAnimatorHelper.DefaultAnimatorListener() {
-                    @Override
-                    public void onAnimationEnd() {
-                        mFabState = STATE_EXPANDED;
-
-                        toggleEditMode(true);
-                    }
-                })
-                .arcComboReveal()
-                .animate();
+        mFabAnimatorBuilder.expanded();
     }
 
     private void reverseAnimateFab() {
-        mFabState = STATE_ANIMATING;
-
-        FabAnimatorHelper.wrap(mFab, mFabSheetCv)
-                .reveal(mFabSheetCv.getLeft() + mFabSheetCv.getWidth() / 2,
-                        mFabSheetCv.getTop() + mFabSheetCv.getHeight() / 2,
-                        (float) Math.hypot(mFabSheetCv.getWidth(), mFabSheetCv.getHeight()),
-                        (float) Math.hypot(mFab.getWidth(), mFab.getHeight()))
-                .setRevealDuration(200)
-                .setRevealInterpolator(new AccelerateInterpolator())
-                .listenReveal(new FabAnimatorHelper.DefaultAnimatorListener() {
-                    @Override
-                    public void onAnimationEnd() {
-                        mFabRevealFl.setVisibility(View.GONE);
-                        mFab.setVisibility(View.VISIBLE);
-                    }
-                })
-                .arc(ViewUtils.getRelativeLeft(mFab) + mFab.getWidth() / 2,
-                        ViewUtils.getRelativeTop(mFab) + mFab.getHeight() / 2,
-                        270, Side.RIGHT)
-                .setArcDuration(200)
-                .setArcInterpolator(new AccelerateDecelerateInterpolator())
-                .listenArc(new FabAnimatorHelper.DefaultAnimatorListener() {
-                    @Override
-                    public void onAnimationEnd() {
-                        mFabState = STATE_CLOSED;
-
-                        toggleEditMode(false);
-                    }
-                })
-                .revealComboArc()
-                .animate();
-    }
-
-    private void toggleEditMode(boolean goEditMode) {
-        if(goEditMode) {
-            mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_EDITING);
-        } else {
-            mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
-        }
-
-        invalidateOptionsMenu(); // recreate options menu
+        mFabAnimatorBuilder.closed();
     }
 
     @Override
@@ -445,9 +391,9 @@ public class MainActivity extends BaseActivity
             SnackBarUtils.dismiss(mSnackBar);
         } else if(mMenuAnimatorBuilder.isExpanded()) {
             mMenuAnimatorBuilder.closed();
-        } else if(mFabState == STATE_ANIMATING) {
+        } else if(mFabAnimatorBuilder.isAnimating()) {
             // nothing
-        } else if(mFabState == STATE_EXPANDED) {
+        } else if(mFabAnimatorBuilder.isExpanded()) {
             reverseAnimateFab();
         } else if(mFileAdapter.isEditingMode()) {
             mFileAdapter.setEditMode(FilesAdapter.EDIT_MODE_NORMAL);
@@ -462,7 +408,7 @@ public class MainActivity extends BaseActivity
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if(mFabState == STATE_ANIMATING) {
+        if(mFabAnimatorBuilder.isAnimating()) {
             return true;
         }
 

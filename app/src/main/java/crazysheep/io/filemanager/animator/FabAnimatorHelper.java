@@ -3,14 +3,17 @@ package crazysheep.io.filemanager.animator;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.view.View;
-import android.view.animation.Interpolator;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 
 import com.nineoldandroids.animation.Animator;
 
+import crazysheep.io.filemanager.utils.ViewUtils;
 import io.codetail.animation.SupportAnimator;
 import io.codetail.animation.ViewAnimationUtils;
 import io.codetail.animation.arcanimator.ArcAnimator;
 import io.codetail.animation.arcanimator.Side;
+import io.codetail.widget.RevealFrameLayout;
 
 /**
  * fab arc and reveal animation helper, refer to {see#https://github.com/konifar/fab-transformation}
@@ -36,38 +39,90 @@ public class FabAnimatorHelper {
 
         public static final long DEFAULT_ANIMATOR_DURATION = 150;
 
-        public static final int TYPE_ARC_COMBO_REVEAL = 0;
-        public static final int TYPE_REVEAL_COMBO_ARC = 1;
-
         private FloatingActionButton mFab;
         private View mRevealV;
+        private RevealFrameLayout mRevealParentV;
         private ArcAnimator mArcAnimator;
         private SupportAnimator mRevealAnimator;
 
-        private AnimatorListener mArcListener;
-        private AnimatorListener mRevealListener;
+        private AnimatorListener mExpandedListener;
+        private AnimatorListener mClosedListener;
 
-        private int mComboType = TYPE_ARC_COMBO_REVEAL;
+        private static final int STATE_CLOSED = 0;
+        private static final int STATE_ANIMATING = 1;
+        private static final int STATE_EXPANDED = 2;
+        private int mCurState = STATE_CLOSED;
 
-        public Builder(@NonNull FloatingActionButton fab, @NonNull View revealView) {
+        public Builder(@NonNull FloatingActionButton fab, @NonNull View revealView,
+                       @NonNull RevealFrameLayout revealParent) {
             mFab = fab;
             mRevealV = revealView;
+            mRevealParentV = revealParent;
         }
 
-        public Builder arc(float endX, float endY, float degree, Side side) {
-            mArcAnimator = ArcAnimator.createArcAnimator(mFab, endX, endY, degree, side);
+        public Builder setExpandedListener(AnimatorListener listener) {
+            mExpandedListener = listener;
+
+            return this;
+        }
+
+        public Builder setClosedListener(AnimatorListener listener) {
+            mClosedListener = listener;
+
+            return this;
+        }
+
+        // expanded
+        public void expanded() {
+            mCurState = STATE_ANIMATING;
+
+            mArcAnimator = ArcAnimator.createArcAnimator(mFab,
+                    ViewUtils.getRelativeLeft(mRevealV) + mRevealV.getWidth() / 2,
+                    ViewUtils.getRelativeTop(mRevealV) + mRevealV.getHeight() / 2,
+                    270f, Side.RIGHT);
             mArcAnimator.setDuration(DEFAULT_ANIMATOR_DURATION);
+            mArcAnimator.setInterpolator(new AccelerateInterpolator());
             mArcAnimator.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
-                    if (mArcListener != null)
-                        mArcListener.onAnimationStart();
+                    if(mExpandedListener != null)
+                        mExpandedListener.onAnimationStart();
                 }
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    if (mArcListener != null)
-                        mArcListener.onAnimationEnd();
+                    mFab.setVisibility(View.GONE);
+                    mRevealParentV.setVisibility(View.VISIBLE);
+
+                    mRevealAnimator = ViewAnimationUtils.createCircularReveal(mRevealV,
+                            mRevealV.getLeft() + mRevealV.getWidth() / 2,
+                            mRevealV.getTop() + mRevealV.getHeight() / 2,
+                            (float) Math.hypot(mFab.getWidth(), mFab.getHeight()),
+                            (float) Math.hypot(mRevealV.getWidth(), mRevealV.getHeight()));
+                    mRevealAnimator.setDuration((int) DEFAULT_ANIMATOR_DURATION);
+                    mRevealAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+                    mRevealAnimator.addListener(new SupportAnimator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart() {
+                        }
+
+                        @Override
+                        public void onAnimationEnd() {
+                            mCurState = STATE_EXPANDED;
+
+                            if(mExpandedListener != null)
+                                mExpandedListener.onAnimationEnd();
+                        }
+
+                        @Override
+                        public void onAnimationCancel() {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat() {
+                        }
+                    });
+                    mRevealAnimator.start();
                 }
 
                 @Override
@@ -78,37 +133,59 @@ public class FabAnimatorHelper {
                 public void onAnimationRepeat(Animator animation) {
                 }
             });
-
-            return this;
+            mArcAnimator.start();
         }
 
-        public Builder setArcInterpolator(@NonNull Interpolator interpolator) {
-            mArcAnimator.setInterpolator(interpolator);
+        public void closed() {
+            mCurState = STATE_ANIMATING;
 
-            return this;
-        }
-
-        public Builder setArcDuration(long duration) {
-            mArcAnimator.setDuration(duration);
-
-            return this;
-        }
-
-        public Builder reveal(int centerX, int centerY, float startRadius, float endRadius) {
             mRevealAnimator = ViewAnimationUtils.createCircularReveal(mRevealV,
-                    centerX, centerY, startRadius, endRadius);
+                    mRevealV.getLeft() + mRevealV.getWidth() / 2,
+                    mRevealV.getTop() + mRevealV.getHeight() / 2,
+                    (float) Math.hypot(mRevealV.getWidth(), mRevealV.getHeight()),
+                    (float) Math.hypot(mFab.getWidth(), mFab.getHeight()));
             mRevealAnimator.setDuration((int) DEFAULT_ANIMATOR_DURATION);
+            mRevealAnimator.setInterpolator(new AccelerateInterpolator());
             mRevealAnimator.addListener(new SupportAnimator.AnimatorListener() {
                 @Override
                 public void onAnimationStart() {
-                    if (mRevealListener != null)
-                        mRevealListener.onAnimationStart();
+                    if(mClosedListener != null)
+                        mClosedListener.onAnimationStart();
                 }
 
                 @Override
                 public void onAnimationEnd() {
-                    if (mRevealListener != null)
-                        mRevealListener.onAnimationEnd();
+                    mRevealParentV.setVisibility(View.GONE);
+                    mFab.setVisibility(View.VISIBLE);
+
+                    mArcAnimator = ArcAnimator.createArcAnimator(mFab,
+                            mFab.getX() - mFab.getTranslationX() + mFab.getWidth() / 2,
+                            mFab.getY() - mFab.getTranslationY() + mFab.getHeight() / 2,
+                            270, Side.RIGHT);
+                    mArcAnimator.setDuration(DEFAULT_ANIMATOR_DURATION);
+                    mArcAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+                    mArcAnimator.addListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            mCurState = STATE_CLOSED;
+
+                            if(mClosedListener != null)
+                                mClosedListener.onAnimationEnd();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+                        }
+                    });
+                    mArcAnimator.start();
                 }
 
                 @Override
@@ -119,111 +196,21 @@ public class FabAnimatorHelper {
                 public void onAnimationRepeat() {
                 }
             });
-
-            return this;
+            mRevealAnimator.start();
         }
 
-        public Builder setRevealInterpolator(@NonNull Interpolator interpolator) {
-            mRevealAnimator.setInterpolator(interpolator);
-
-            return this;
+        public boolean isExpanded() {
+            return mCurState == STATE_EXPANDED;
         }
 
-        public Builder setRevealDuration(long duration) {
-            mRevealAnimator.setDuration((int) duration);
-
-            return this;
-        }
-
-        public Builder listenArc(@NonNull AnimatorListener listener) {
-            mArcListener = listener;
-
-            return this;
-        }
-
-        public Builder listenReveal(@NonNull AnimatorListener listener) {
-            mRevealListener = listener;
-
-            return this;
-        }
-
-        public Builder arcComboReveal() {
-            mComboType = TYPE_ARC_COMBO_REVEAL;
-
-            return this;
-        }
-
-        public Builder revealComboArc() {
-            mComboType = TYPE_REVEAL_COMBO_ARC;
-
-            return this;
-        }
-
-        public void animate() {
-            /*
-            * TYPE_ARC_COMBO_REVEAL: arc animator play -> reveal animator play
-            *
-            * TYPE_REVEAL_COMBO_ARC: reveal animator play -> arc animator play
-            * **/
-            mArcAnimator.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                    if(mArcListener != null)
-                        mArcListener.onAnimationStart();
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if(mArcListener != null)
-                        mArcListener.onAnimationEnd();
-
-                    if(mComboType == TYPE_ARC_COMBO_REVEAL)
-                        mRevealAnimator.start();
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                }
-            });
-
-            mRevealAnimator.addListener(new SupportAnimator.AnimatorListener() {
-                @Override
-                public void onAnimationStart() {
-                    if(mRevealListener != null)
-                        mRevealListener.onAnimationStart();
-                }
-
-                @Override
-                public void onAnimationEnd() {
-                    if(mRevealListener != null)
-                        mRevealListener.onAnimationEnd();
-
-                    if(mComboType == TYPE_REVEAL_COMBO_ARC)
-                        mArcAnimator.start();
-                }
-
-                @Override
-                public void onAnimationCancel() {
-                }
-
-                @Override
-                public void onAnimationRepeat() {
-                }
-            });
-
-            if(mComboType == TYPE_ARC_COMBO_REVEAL)
-                mArcAnimator.start();
-            else
-                mRevealAnimator.start();
+        public boolean isAnimating() {
+            return mCurState == STATE_ANIMATING;
         }
     }
 
-    public static Builder wrap(@NonNull FloatingActionButton fab, @NonNull View revealView) {
-        return new Builder(fab, revealView);
+    public static Builder wrap(@NonNull FloatingActionButton fab, @NonNull View revealView,
+                               @NonNull RevealFrameLayout revealParent) {
+        return new Builder(fab, revealView, revealParent);
     }
 
 }
