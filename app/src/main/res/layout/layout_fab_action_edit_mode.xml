@@ -6,9 +6,18 @@
     android:orientation="horizontal">
 
     <ImageView
+        android:id="@+id/action_cancel_iv"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_widthPercent="20%"
+        android:adjustViewBounds="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_cancel_action"/>
+    <ImageView
         android:id="@+id/action_copy_iv"
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_toEndOf="@id/action_cancel_iv"
         android:adjustViewBounds="true"
         android:scaleType="center"
         android:src="@drawable/ic_file_copy"

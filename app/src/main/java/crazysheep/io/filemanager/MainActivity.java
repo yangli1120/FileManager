@@ -66,6 +66,7 @@ public class MainActivity extends BaseActivity
     @Bind(R.id.fab) FloatingActionButton mFab;
     @Bind(R.id.fab_sheet_cv) CardView mFabSheetCv;
     @Bind(R.id.fab_sheet_rfl) RevealFrameLayout mFabRevealFl;
+    @Bind(R.id.action_cancel_iv) ImageView mCancelIv;
     @Bind(R.id.action_copy_iv) ImageView mFileCopyIv;
     @Bind(R.id.action_cut_iv) ImageView mFileCutIv;
     @Bind(R.id.action_delete_iv) ImageView mFileDeleteIv;
@@ -114,7 +115,6 @@ public class MainActivity extends BaseActivity
                 .setExpandedListener(new FabAnimatorHelper.DefaultAnimatorListener() {
                     @Override
                     public void onAnimationEnd() {
-                        super.onAnimationEnd();
                         toggleEditMode(true);
                     }
                 })
@@ -150,6 +150,7 @@ public class MainActivity extends BaseActivity
             }
         });
 
+        mCancelIv.setOnClickListener(this);
         mFileCopyIv.setOnClickListener(this);
         mFileCutIv.setOnClickListener(this);
         mFileDeleteIv.setOnClickListener(this);
@@ -215,6 +216,10 @@ public class MainActivity extends BaseActivity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.action_cancel_iv: {
+                reverseAnimateFab();
+            }break;
+
             case R.id.action_copy_iv: {
                 if(hasChosenFiles()) {
                     // back to normal mode
@@ -223,9 +228,9 @@ public class MainActivity extends BaseActivity
                     // copy file
                     final List<File> sources = FileItemDtoHelper.changeItems2Files(
                             mFileAdapter.getChosenItems());
-                    String actioMsg = getString(R.string.msg_choose_directory_to_copy_files,
+                    String actionMsg = getString(R.string.msg_choose_directory_to_copy_files,
                             sources.size());
-                    mSnackBar = Snackbar.make(mRootView, actioMsg, Snackbar.LENGTH_INDEFINITE)
+                    mSnackBar = Snackbar.make(mRootView, actionMsg, Snackbar.LENGTH_INDEFINITE)
                             .setAction(R.string.action_paste, new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -237,6 +242,17 @@ public class MainActivity extends BaseActivity
                         @Override
                         public void onClick(View v) {
                             SnackBarUtils.dismiss(mSnackBar);
+                        }
+                    });
+                    mSnackBar.setCallback(new Snackbar.Callback() {
+                        @Override
+                        public void onDismissed(Snackbar snackbar, int event) {
+                            mFabAnimatorBuilder.resetAndShowFab();
+                        }
+
+                        @Override
+                        public void onShown(Snackbar snackbar) {
+                            mFabAnimatorBuilder.hideFab();
                         }
                     });
                     mSnackBar.show();
@@ -265,6 +281,17 @@ public class MainActivity extends BaseActivity
                         @Override
                         public void onClick(View v) {
                             SnackBarUtils.dismiss(mSnackBar);
+                        }
+                    });
+                    mSnackBar.setCallback(new Snackbar.Callback() {
+                        @Override
+                        public void onDismissed(Snackbar snackbar, int event) {
+                            mFabAnimatorBuilder.resetAndShowFab();
+                        }
+
+                        @Override
+                        public void onShown(Snackbar snackbar) {
+                            mFabAnimatorBuilder.hideFab();
                         }
                     });
                     mSnackBar.show();
@@ -387,8 +414,6 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else if(mSnackBar != null && mSnackBar.isShown()) {
-            SnackBarUtils.dismiss(mSnackBar);
         } else if(mMenuAnimatorBuilder.isExpanded()) {
             mMenuAnimatorBuilder.closed();
         } else if(mFabAnimatorBuilder.isAnimating()) {

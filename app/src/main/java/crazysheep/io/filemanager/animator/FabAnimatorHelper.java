@@ -2,9 +2,11 @@ package crazysheep.io.filemanager.animator;
 
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.animation.FastOutLinearInInterpolator;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.BounceInterpolator;
 
 import com.nineoldandroids.animation.Animator;
 
@@ -72,6 +74,26 @@ public class FabAnimatorHelper {
             return this;
         }
 
+        public void hideFab() {
+            mRevealParentV.setVisibility(View.GONE);
+            mFab.setVisibility(View.GONE);
+        }
+
+        public void resetAndShowFab() {
+            mRevealParentV.setVisibility(View.GONE);
+            mFab.setVisibility(View.VISIBLE);
+            mFab.setTranslationX(0);
+            mFab.setTranslationY(0);
+            mFab.setScaleX(0f);
+            mFab.setScaleY(0f);
+            mFab.animate()
+                    .setInterpolator(new BounceInterpolator())
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(DEFAULT_ANIMATOR_DURATION)
+                    .start();
+        }
+
         // expanded
         public void expanded() {
             mCurState = STATE_ANIMATING;
@@ -100,7 +122,7 @@ public class FabAnimatorHelper {
                             (float) Math.hypot(mFab.getWidth(), mFab.getHeight()),
                             (float) Math.hypot(mRevealV.getWidth(), mRevealV.getHeight()));
                     mRevealAnimator.setDuration((int) DEFAULT_ANIMATOR_DURATION);
-                    mRevealAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+                    mRevealAnimator.setInterpolator(new AccelerateInterpolator());
                     mRevealAnimator.addListener(new SupportAnimator.AnimatorListener() {
                         @Override
                         public void onAnimationStart() {
