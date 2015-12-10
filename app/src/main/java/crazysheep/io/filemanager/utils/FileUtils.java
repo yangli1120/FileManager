@@ -139,4 +139,11 @@ public class FileUtils {
         return multiInfoDto;
     }
 
+    public static long sizeOfFile(@NonNull File file) {
+        if(!file.exists())
+            return 0l;
+
+        return org.apache.commons.io.FileUtils.sizeOf(file);
+    }
+
 }

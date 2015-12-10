@@ -29,7 +29,7 @@ public class SingleFileInfoDto extends FileInfoDto implements Parcelable {
     public static SingleFileInfoDto parseInfoFromFile(@NonNull File file) {
         SingleFileInfoDto infoDto = new SingleFileInfoDto();
         infoDto.filepath = file.getAbsolutePath();
-        infoDto.filesize = file.length();
+        infoDto.filesize = FileUtils.sizeOfFile(file);
         infoDto.filetype = FileUtils.getMimeType(file);
         infoDto.lastmodified = file.lastModified();
 
