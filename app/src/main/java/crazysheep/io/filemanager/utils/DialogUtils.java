@@ -60,21 +60,27 @@ public class DialogUtils {
         return dialog;
     }
 
-    public static Dialog showSingleConfirmDialog(@NonNull final Activity activity, String title,
+    public static Dialog showSingleConfirmDialog(@NonNull Activity activity, String title,
                                                  String content) {
-        return showConfirmDialog(activity, title, content,
-                new ButtonAction() {
+        MaterialDialog dialog = new MaterialDialog.Builder(activity)
+                .title(title)
+                .content(content)
+                .positiveText(activity.getString(R.string.ok))
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
-                    public String getTitle() {
-                        return activity.getString(R.string.ok);
+                    public void onClick(@NonNull MaterialDialog dialog,
+                                        @NonNull DialogAction which) {
+                        dismissDialog(dialog);
                     }
+                })
+                .build();
+        dialog.setOwnerActivity(activity);
 
-                    @Override
-                    public void onClick(DialogInterface dialog) {
-                        dismissDialog((Dialog) dialog);
-                    }
-                },
-                null);
+        if(dialog.getOwnerActivity() != null
+                && !dialog.getOwnerActivity().isFinishing())
+            dialog.show();
+
+        return dialog;
     }
 
     /**

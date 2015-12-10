@@ -133,11 +133,13 @@ public class MainActivity extends BaseActivity
                         switch (id) {
                             case R.id.edit_mode_fab: {
                                 animateFab();
-                            }break;
+                            }
+                            break;
 
                             case R.id.create_folder_fab: {
                                 showCreateFolderDialog();
-                            }break;
+                            }
+                            break;
                         }
                     }
                 });
@@ -192,6 +194,19 @@ public class MainActivity extends BaseActivity
                         }
                     }
                 }
+            }
+        });
+        mFileAdapter.setOnItemLongClickListener(new FilesAdapter.OnItemLongClickListener() {
+            @Override
+            public boolean onLongClick(int position, View view) {
+                // quick go to edit mode
+                if(!mFileAdapter.isEditingMode()) {
+                    toggleEditMode(true);
+                    mFileAdapter.toggleItemChoose(position);
+                    animateFab();
+                }
+
+                return true;
             }
         });
         mFileRv.setItemAnimator(new DefaultItemAnimator());
@@ -571,7 +586,8 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onError(String err) {
-                DialogUtils.showSingleConfirmDialog(getActivity(), null, err);
+                DialogUtils.showSingleConfirmDialog(getActivity(),
+                        getString(R.string.tv_opps), err);
             }
         });
     }
@@ -585,7 +601,8 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onError(String err) {
-                DialogUtils.showSingleConfirmDialog(getActivity(), null, err);
+                DialogUtils.showSingleConfirmDialog(getActivity(),
+                        getString(R.string.tv_opps), err);
             }
         });
     }

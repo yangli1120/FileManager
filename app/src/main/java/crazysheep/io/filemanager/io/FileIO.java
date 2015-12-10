@@ -9,9 +9,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import crazysheep.io.filemanager.utils.L;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.exceptions.Exceptions;
 import rx.exceptions.OnErrorThrowable;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
@@ -38,6 +40,11 @@ public class FileIO {
                 .map(new Func1<File, Boolean>() {
                     @Override
                     public Boolean call(File file) {
+                        if (file.getParentFile().getAbsolutePath().equals(
+                                targetDir.getAbsolutePath()))
+                            throw Exceptions.propagate(new Error("target directory to move" +
+                                    " can not be current directory"));
+
                         try {
                             if (file.isDirectory())
                                 FileUtils.moveDirectoryToDirectory(file, targetDir, true);
@@ -46,7 +53,7 @@ public class FileIO {
                         } catch (IOException | NullPointerException e) {
                             e.printStackTrace();
 
-                            throw OnErrorThrowable.from(e);
+                            throw Exceptions.propagate(e);
                         }
 
                         return true;
@@ -62,7 +69,7 @@ public class FileIO {
 
                     @Override
                     public void onError(Throwable e) {
-                        if(listener != null)
+                        if(listener != null && e != null)
                             listener.onError(e.getMessage());
                     }
 
@@ -82,6 +89,11 @@ public class FileIO {
                 .map(new Func1<File, Boolean>() {
                     @Override
                     public Boolean call(File file) {
+                        if (file.getParentFile().getAbsolutePath().equals(
+                                targetDir.getAbsolutePath()))
+                            throw Exceptions.propagate(new Error("target directory to copy" +
+                                    " can not be current directory"));
+
                         try {
                             if (file.isDirectory())
                                 FileUtils.copyDirectoryToDirectory(file, targetDir);
@@ -90,7 +102,7 @@ public class FileIO {
                         } catch (IOException | NullPointerException e) {
                             e.printStackTrace();
 
-                            throw OnErrorThrowable.from(e);
+                            throw Exceptions.propagate(e);
                         }
 
                         return Boolean.TRUE;
@@ -100,7 +112,7 @@ public class FileIO {
                 .subscribe(new Observer<Boolean>() {
                     @Override
                     public void onCompleted() {
-                        if(listener != null)
+                        if (listener != null)
                             listener.onSuccess();
                     }
 

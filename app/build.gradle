@@ -56,7 +56,7 @@ dependencies {
     compile 'com.android.support:percent:23.1.1'
 
     // rx java
-    compile 'io.reactivex:rxjava:1.0.14'
+    compile 'io.reactivex:rxjava:1.1.0'
     compile 'io.reactivex:rxandroid:1.0.1'
 
     // apache commons io

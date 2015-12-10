@@ -41,5 +41,6 @@
     <string name="tv_multi_file_path">%1$s\n%2$s...</string>
 
     <string name="tv_file_dir">folder</string>
+    <string name="tv_opps">Opps...</string>
 
 </resources>
