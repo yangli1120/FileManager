@@ -39,6 +39,7 @@
     <string name="tv_file_info">File info</string>
     <string name="tv_multi_files">%s files</string>
     <string name="tv_multi_file_path">%1$s\n%2$s...</string>
+    <string name="tv_file_size_calculating">Calculating...</string>
 
     <string name="tv_file_dir">folder</string>
     <string name="tv_opps">Opps...</string>

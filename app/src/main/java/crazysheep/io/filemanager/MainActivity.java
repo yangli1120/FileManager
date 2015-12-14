@@ -353,7 +353,8 @@ public class MainActivity extends BaseActivity
                             R.layout.dialog_file_info, null);
                     TextView fileTypeTv = ButterKnife.findById(contentView, R.id.file_type_tv);
                     TextView filePathTv = ButterKnife.findById(contentView, R.id.file_path_tv);
-                    TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
+                    final TextView fileSizeTv = ButterKnife.findById(contentView, R.id.file_size_tv);
+                    fileSizeTv.setText(R.string.tv_file_size_calculating);
                     TextView fileLastModifiedTv = ButterKnife.findById(contentView,
                             R.id.file_last_modified_time_tv);
                     // show file info dialog
@@ -364,7 +365,6 @@ public class MainActivity extends BaseActivity
                         fileTypeTv.setText(file.isDirectory()
                                 ? getString(R.string.tv_file_dir) : fileInfoDto.filetype);
                         filePathTv.setText(fileInfoDto.filepath);
-                        fileSizeTv.setText(FileUtils.formatFileSize(fileInfoDto.filesize));
                         fileLastModifiedTv.setText(DateUtils.formatTime(fileInfoDto.lastmodified));
                     } else if(mFileAdapter.getChosenItems().size() > 1) {
                         List<File> files = new ArrayList<>(mFileAdapter.getChosenItems().size());
@@ -377,8 +377,21 @@ public class MainActivity extends BaseActivity
                         filePathTv.setText(getString(R.string.tv_multi_file_path,
                                 fileInfoDto.fileinfoList.get(0).filepath,
                                 fileInfoDto.fileinfoList.get(1).filepath));
-                        fileSizeTv.setText(FileUtils.formatFileSize(fileInfoDto.totalfilesize));
                     }
+                    // calculate file size
+                    FileIO.size(FileItemDtoHelper.changeItems2Files(mFileAdapter.getChosenItems()),
+                            new FileIO.OnIOSizeListener() {
+                                @Override
+                                public void onSizeOf(long size) {
+                                    fileSizeTv.setText(FileUtils.formatFileSize(size));
+                                }
+
+                                @Override
+                                public void onError(String err) {
+                                    DialogUtils.showSingleConfirmDialog(getActivity(),
+                                            getString(R.string.tv_opps), err);
+                                }
+                            });
 
                     DialogUtils.showCustomDialog(this, getString(R.string.tv_file_info),
                             contentView);

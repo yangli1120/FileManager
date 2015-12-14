@@ -7,14 +7,14 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-import crazysheep.io.filemanager.utils.L;
 import rx.Observable;
 import rx.Observer;
+import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.exceptions.Exceptions;
-import rx.exceptions.OnErrorThrowable;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
@@ -27,6 +27,11 @@ public class FileIO {
 
     public interface OnIOActionListener {
         void onSuccess();
+        void onError(String err);
+    }
+
+    public interface OnIOSizeListener {
+        void onSizeOf(long size);
         void onError(String err);
     }
 
@@ -124,6 +129,44 @@ public class FileIO {
 
                     @Override
                     public void onNext(Boolean aBoolean) {
+                    }
+                });
+    }
+
+    /**
+     * get size of file or directory
+     * */
+    public static void size(@NonNull List<File> files, final OnIOSizeListener listener) {
+        final List<Long> sizelist = new ArrayList<>(files.size());
+        Observable.from(files)
+                .subscribeOn(Schedulers.io())
+                .map(new Func1<File, Long>() {
+                    @Override
+                    public Long call(File file) {
+                        return crazysheep.io.filemanager.utils.FileUtils.sizeOfFile(file);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Long>() {
+                    @Override
+                    public void onCompleted() {
+                        long totalSize = 0;
+                        for(Long aLong : sizelist)
+                            totalSize += aLong;
+
+                        if(listener != null)
+                            listener.onSizeOf(totalSize);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        if(listener != null && e != null)
+                            listener.onError(e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(Long aLong) {
+                        sizelist.add(aLong == null ? 0 : aLong);
                     }
                 });
     }

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 public class MultiFileInfoDto extends FileInfoDto implements Parcelable {
 
     public int filecount;
-    public int totalfilesize;
     public ArrayList<SingleFileInfoDto> fileinfoList;
 
     public void addSingleFileInfo(@NonNull SingleFileInfoDto fileInfoDto) {

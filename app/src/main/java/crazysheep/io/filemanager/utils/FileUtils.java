@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import crazysheep.io.filemanager.model.FileInfoDto;
 import crazysheep.io.filemanager.model.MultiFileInfoDto;
 import crazysheep.io.filemanager.model.SingleFileInfoDto;
 import rx.Observable;
@@ -131,7 +130,6 @@ public class FileUtils {
                     public void call(File file) {
                         multiInfoDto.filecount++;
                         SingleFileInfoDto fileInfo = SingleFileInfoDto.parseInfoFromFile(file);
-                        multiInfoDto.totalfilesize += fileInfo.filesize;
                         multiInfoDto.addSingleFileInfo(fileInfo);
                     }
                 });
