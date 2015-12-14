@@ -76,6 +76,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         mCurrentMode = mode;
         filterHidden();
 
+        resetItemChooseState();
+
         notifyDataSetChanged();
     }
 
