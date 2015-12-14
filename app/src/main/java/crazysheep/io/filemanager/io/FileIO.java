@@ -171,4 +171,44 @@ public class FileIO {
                 });
     }
 
+    /**
+     * delete file or directory
+     */
+    public static void delete(@NonNull List<File> files, final OnIOActionListener listener) {
+        Observable.from(files)
+                .subscribeOn(Schedulers.io())
+                .map(new Func1<File, Boolean>() {
+                    @Override
+                    public Boolean call(File file) {
+                        try {
+                            FileUtils.forceDelete(file);
+                        } catch (IOException | NullPointerException e) {
+                            e.printStackTrace();
+
+                            throw Exceptions.propagate(e);
+                        }
+
+                        return Boolean.TRUE;
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Boolean>() {
+                    @Override
+                    public void onCompleted() {
+                        if(listener != null)
+                            listener.onSuccess();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        if (listener != null && e != null)
+                            listener.onError(e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(Boolean aBoolean) {
+                    }
+                });
+    }
+
 }

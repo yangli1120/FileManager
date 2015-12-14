@@ -5,7 +5,6 @@ import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import crazysheep.io.filemanager.model.MultiFileInfoDto;
@@ -74,42 +73,6 @@ public class FileUtils {
                 return sb.append(String.format("%.2f", byteSize)).append("b").toString();
             }
         }
-    }
-
-    /**
-     * delete target file or directory
-     * */
-    public static boolean deleteFile(@NonNull String filepath) {
-        return deleteFile(new File(filepath));
-    }
-
-    /**
-     * delete target file or directory
-     * */
-    public static boolean deleteFile(@NonNull File file) {
-        if(!file.exists())
-            throw new RuntimeException("Target file NOT exists: " + file.getAbsolutePath());
-
-        if(file.isDirectory())
-            return deleteDir(file);
-        else
-            return file.delete();
-    }
-
-    /**
-     * delete directory
-     * */
-    public static boolean deleteDir(@NonNull File dir) {
-        if(dir.isDirectory() && dir.exists())
-            try {
-                org.apache.commons.io.FileUtils.deleteDirectory(dir);
-
-                return true;
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
-
-        return false;
     }
 
     /**

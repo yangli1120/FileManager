@@ -133,6 +133,25 @@ public class DialogUtils {
     }
 
     /**
+     * show loading dialog
+     * */
+    public static Dialog showLoadingDialog(@NonNull Activity activity, String title,
+                                           boolean cancelable, boolean cancelTouchOutside) {
+        Dialog dialog = new MaterialDialog.Builder(activity)
+                .title(title)
+                .progress(true, 0)
+                .build();
+        dialog.setOwnerActivity(activity);
+        dialog.setCanceledOnTouchOutside(cancelTouchOutside);
+        dialog.setCancelable(cancelable);
+
+        if(dialog.getOwnerActivity() != null && !dialog.getOwnerActivity().isFinishing())
+            dialog.show();
+
+        return dialog;
+    }
+
+    /**
      * dismiss dialog safety
      * */
     public static void dismissDialog(@NonNull Dialog dialog) {

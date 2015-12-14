@@ -53,7 +53,6 @@ import crazysheep.io.filemanager.prefs.SettingsPrefs;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
-import crazysheep.io.filemanager.utils.L;
 import crazysheep.io.filemanager.utils.SnackBarUtils;
 import io.codetail.widget.RevealFrameLayout;
 
@@ -200,7 +199,7 @@ public class MainActivity extends BaseActivity
             @Override
             public boolean onLongClick(int position, View view) {
                 // quick go to edit mode
-                if(!mFileAdapter.isEditingMode()) {
+                if (!mFileAdapter.isEditingMode()) {
                     toggleEditMode(true);
                     mFileAdapter.toggleItemChoose(position);
                     animateFab();
@@ -316,10 +315,11 @@ public class MainActivity extends BaseActivity
             case R.id.action_delete_iv: {
                 if(hasChosenFiles()) {
                     final List<FileItemDto> chooseFiles = mFileAdapter.getChosenItems();
-                    String dialogTitle = chooseFiles.size() == 1
+                    String dialogContent = chooseFiles.size() == 1
                             ? getString(R.string.tv_delete_sing_file, chooseFiles.get(0).filename)
                                     : getString(R.string.tv_delete_files, chooseFiles.size());
-                    DialogUtils.showConfirmDialog(this, dialogTitle, null,
+                    DialogUtils.showConfirmDialog(this, getString(R.string.tv_title_delete_files),
+                            dialogContent,
                             new DialogUtils.ButtonAction() {
                                 @Override
                                 public String getTitle() {
@@ -519,17 +519,7 @@ public class MainActivity extends BaseActivity
                 new PermissionsResultAction() {
                     @Override
                     public void onGranted() {
-                        List<FileItemDto> deleteItems = new ArrayList<>();
-                        for (FileItemDto deleteItem : mFileAdapter.getChosenItems()) {
-                            boolean deleteResult = FileUtils.deleteFile(deleteItem.filepath);
-                            if (deleteResult)
-                                deleteItems.add(deleteItem);
-
-                            L.d(TAG, "delete file result: " + deleteResult
-                                    + ", delete file: " + deleteItem.filepath);
-                        }
-
-                        mFileAdapter.removeItems(deleteItems);
+                        deleteFile(mFileAdapter.getChosenItems());
                     }
 
                     @Override
@@ -614,6 +604,28 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onError(String err) {
+                DialogUtils.showSingleConfirmDialog(getActivity(),
+                        getString(R.string.tv_opps), err);
+            }
+        });
+    }
+
+    private void deleteFile(@NonNull final List<FileItemDto> sources) {
+        final Dialog loadingDlg = DialogUtils.showLoadingDialog(getActivity(),
+                getString(R.string.tv_please_waiting),
+                false, false);
+        FileIO.delete(FileItemDtoHelper.changeItems2Files(sources), new FileIO.OnIOActionListener() {
+            @Override
+            public void onSuccess() {
+                DialogUtils.dismissDialog(loadingDlg);
+
+                mFileAdapter.removeItems(sources);
+            }
+
+            @Override
+            public void onError(String err) {
+                DialogUtils.dismissDialog(loadingDlg);
+
                 DialogUtils.showSingleConfirmDialog(getActivity(),
                         getString(R.string.tv_opps), err);
             }
