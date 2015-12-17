@@ -94,6 +94,8 @@ dependencies {
     compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
     // Stetho core
     compile 'com.facebook.stetho:stetho:1.2.0'
+    // nice search view
+    compile 'com.github.arimorty:floatingsearchview:1.1.2'
 
     compile 'com.hannesdorfmann.parcelableplease:annotation:1.0.1'
     apt 'com.hannesdorfmann.parcelableplease:processor:1.0.1'

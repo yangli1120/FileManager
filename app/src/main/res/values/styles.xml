@@ -32,4 +32,5 @@
     <style name="MyDialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowBackground">@drawable/default_dialog_bg_inset</item>
     </style>
+
 </resources>

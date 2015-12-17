@@ -13,6 +13,7 @@ import java.util.List;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.exceptions.Exceptions;
 import rx.functions.Func1;
@@ -26,7 +27,7 @@ import rx.schedulers.Schedulers;
 public class RxDB {
 
     public interface OnQueryListener<T extends Model> {
-        void onResult(List<T> results, String requestKey);
+        void onResult(List<T> results);
         void onError(String err);
     }
 
@@ -42,8 +43,6 @@ public class RxDB {
 
     public static class QueryInfo<T extends Model> {
 
-        private String UUID = java.util.UUID.randomUUID().toString();
-
         private Class<T> mTable;
         private String mWhere;
         private String mOrderBy;
@@ -54,19 +53,14 @@ public class RxDB {
             mWhere = where;
             mOrderBy = orderBy;
         }
-
-        public String getUUID() {
-            return UUID;
-        }
     }
 
     /**
      * query database
      * */
-    public static <T extends Model> void query(@NonNull final QueryInfo queryInfo,
-                                               @NonNull final String requestKey,
+    public static <T extends Model> Subscription query(@NonNull final QueryInfo queryInfo,
                                                @NonNull final OnQueryListener<T> listener) {
-        Observable.just(queryInfo)
+        return Observable.just(queryInfo)
                 .subscribeOn(Schedulers.io())
                 .map(new Func1<QueryInfo, List<T>>() {
                     @Override
@@ -92,7 +86,7 @@ public class RxDB {
 
                     @Override
                     public void onNext(List<T> objects) {
-                        listener.onResult(objects, requestKey);
+                        listener.onResult(objects);
                     }
                 });
     }

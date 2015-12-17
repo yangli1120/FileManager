@@ -151,6 +151,7 @@ public class MainActivity extends BaseActivity
                                 // search file
                                 ActivityUtils.startResult(getActivity(), REQUEST_CODE_SEARCH,
                                         ActivityUtils.prepare(getActivity(), SearchActivity.class));
+                                overridePendingTransition(0, 0);
                             }break;
                         }
                     }
@@ -186,10 +187,7 @@ public class MainActivity extends BaseActivity
                     File file = new File(itemModel.filepath);
                     if (file.isDirectory()) {
                         // save last directory first visible position and offset
-                        int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
-                        ScanDirDto dirBean = new ScanDirDto(mCurrentDir, firstVisibleItemPosition,
-                                mLayoutMgr.findViewByPosition(firstVisibleItemPosition).getTop());
-                        mFileStack.push(dirBean);
+                        pushDirToStack(mCurrentDir);
 
                         doScanDir(new ScanDirDto(file, 0, 0));
                     } else {
@@ -247,6 +245,8 @@ public class MainActivity extends BaseActivity
         if(resultCode == Activity.RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_CODE_SEARCH: {
+                    pushDirToStack(mCurrentDir);
+
                     String path = data.getStringExtra(SearchActivity.EXTRA_FILE_PATH);
                     doScanDir(new ScanDirDto(new File(path), 0, 0));
                 }break;
@@ -601,6 +601,14 @@ public class MainActivity extends BaseActivity
                 }
             });
         }
+    }
+
+    private void pushDirToStack(@NonNull File dir) {
+        // save last directory first visible position and offset
+        int firstVisibleItemPosition = mLayoutMgr.findFirstVisibleItemPosition();
+        ScanDirDto dirBean = new ScanDirDto(dir, firstVisibleItemPosition,
+                mLayoutMgr.findViewByPosition(firstVisibleItemPosition).getTop());
+        mFileStack.push(dirBean);
     }
 
     private void refreshCurDir() {

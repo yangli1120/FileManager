@@ -4,6 +4,7 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 
 /**
@@ -22,7 +23,7 @@ public class StringUtils {
                                             @NonNull String dad,
                                             @ColorInt int color) {
         SpannableString ssb = new SpannableString(dad);
-        if(dad.contains(child)) {
+        if(!TextUtils.isEmpty(child) && dad.contains(child)) {
             int startIndex = dad.toLowerCase().indexOf(child.toString());
             ssb.setSpan(new ForegroundColorSpan(color), startIndex, startIndex + child.length(),
                     Spanned.SPAN_INCLUSIVE_INCLUSIVE);

@@ -17,6 +17,7 @@ import java.util.List;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.exceptions.Exceptions;
 import rx.functions.Func1;
@@ -223,9 +224,9 @@ public class FileIO {
     /**
      * list files under target directory with compile name
      * */
-    public static void list(@NonNull final String compileName, @NonNull final File targetDir,
+    public static Subscription list(@NonNull final String compileName, @NonNull final File targetDir,
                               @NonNull final OnIOSearchListener listener) {
-        Observable.just(targetDir)
+        return Observable.just(targetDir)
                 .subscribeOn(Schedulers.io())
                 .map(new Func1<File, List<File>>() {
                     @Override
