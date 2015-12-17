@@ -12,6 +12,12 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
+
+        <meta-data android:name="AA_DB_NAME" android:value="filemanager.db" />
+        <meta-data android:name="AA_DB_VERSION" android:value="1" />
+        <meta-data android:name="AA_MODELS"
+            android:value="crazysheep.io.filemanager.model.SuggestionsTable"/>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -22,6 +28,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".SearchActivity"
+            android:theme="@style/AppTheme.Translucent"/>
     </application>
 
 </manifest>

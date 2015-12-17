@@ -18,12 +18,23 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+    }
 }
 
 buildscript {
     repositories {
         jcenter()
         maven { url "https://jitpack.io" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
         // replace with the current version of the Android plugin
@@ -37,6 +48,7 @@ allprojects {
     repositories {
         jcenter()
         maven { url "https://jitpack.io" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
 }
 
@@ -76,6 +88,12 @@ dependencies {
         transitive = true;
     }
     compile 'com.github.asyl.animation:arcanimator:1.0.0'
+    // swipebacklayout
+    compile 'me.imid.swipebacklayout.lib:library:1.0.0'
+    // orm
+    compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+    // Stetho core
+    compile 'com.facebook.stetho:stetho:1.2.0'
 
     compile 'com.hannesdorfmann.parcelableplease:annotation:1.0.1'
     apt 'com.hannesdorfmann.parcelableplease:processor:1.0.1'

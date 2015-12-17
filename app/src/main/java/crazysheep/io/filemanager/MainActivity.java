@@ -1,6 +1,7 @@
 package crazysheep.io.filemanager;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
@@ -50,6 +51,7 @@ import crazysheep.io.filemanager.model.MultiFileInfoDto;
 import crazysheep.io.filemanager.model.ScanDirDto;
 import crazysheep.io.filemanager.model.SingleFileInfoDto;
 import crazysheep.io.filemanager.prefs.SettingsPrefs;
+import crazysheep.io.filemanager.utils.ActivityUtils;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
@@ -74,6 +76,9 @@ public class MainActivity extends BaseActivity
     @Bind(R.id.fab_menu_fl) View mFabMenuParentFl;
     @Bind(R.id.create_folder_fab) FloatingActionButton mCreateFolderFab;
     @Bind(R.id.edit_mode_fab) FloatingActionButton mEditModeFab;
+    @Bind(R.id.search_file_fab) FloatingActionButton mSearchFab;
+
+    public static final int REQUEST_CODE_SEARCH = 1000;
 
     private FabMenuAnimatorHelper.Builder mMenuAnimatorBuilder;
     private FabAnimatorHelper.Builder mFabAnimatorBuilder;
@@ -126,6 +131,7 @@ public class MainActivity extends BaseActivity
         mMenuAnimatorBuilder = FabMenuAnimatorHelper.wrap(mFabMenuRevealLl, mFabMenuParentFl, mFab)
                 .addFab(mCreateFolderFab, R.id.create_folder_fab)
                 .addFab(mEditModeFab, R.id.edit_mode_fab)
+                .addFab(mSearchFab, R.id.search_file_fab)
                 .setOnFabMenuItemClickListener(new FabMenuAnimatorHelper.OnFabItemClickListener() {
                     @Override
                     public void onFabItemClick(FloatingActionButton fab, int id) {
@@ -139,6 +145,12 @@ public class MainActivity extends BaseActivity
                                 showCreateFolderDialog();
                             }
                             break;
+
+                            case R.id.search_file_fab: {
+                                // search file
+                                ActivityUtils.startResult(getActivity(), REQUEST_CODE_SEARCH,
+                                        ActivityUtils.prepare(getActivity(), SearchActivity.class));
+                            }break;
                         }
                     }
                 });
@@ -225,6 +237,20 @@ public class MainActivity extends BaseActivity
                                 Snackbar.LENGTH_LONG);
                     }
                 });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(resultCode == Activity.RESULT_OK) {
+            switch (requestCode) {
+                case REQUEST_CODE_SEARCH: {
+                    String path = data.getStringExtra(SearchActivity.EXTRA_FILE_PATH);
+                    doScanDir(new ScanDirDto(new File(path), 0, 0));
+                }break;
+            }
+        }
     }
 
     @Override

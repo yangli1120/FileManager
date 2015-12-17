@@ -4,6 +4,7 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <string name="action_search">Search</string>
     <string name="action_settings">Settings</string>
     <string name="action_show_hidden_files">Show hidden files</string>
     <string name="action_not_show_hidden_files">Not show hidden files</string>
@@ -23,6 +24,7 @@
     <string name="msg_folder_is_exist">This folder is exist</string>
 
     <string name="hint_input_new_folder_name">Input new folder name</string>
+    <string name="hint_input_file_name_search">file name...</string>
 
     <string name="tv_file_sub_count">%s项</string>
 

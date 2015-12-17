@@ -4,10 +4,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOCase;
+import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import rx.Observable;
@@ -32,6 +36,11 @@ public class FileIO {
 
     public interface OnIOSizeListener {
         void onSizeOf(long size);
+        void onError(String err);
+    }
+
+    public interface OnIOSearchListener {
+        void onResult(List<File> files);
         void onError(String err);
     }
 
@@ -207,6 +216,41 @@ public class FileIO {
 
                     @Override
                     public void onNext(Boolean aBoolean) {
+                    }
+                });
+    }
+
+    /**
+     * list files under target directory with compile name
+     * */
+    public static void list(@NonNull final String compileName, @NonNull final File targetDir,
+                              @NonNull final OnIOSearchListener listener) {
+        Observable.just(targetDir)
+                .subscribeOn(Schedulers.io())
+                .map(new Func1<File, List<File>>() {
+                    @Override
+                    public List<File> call(File file) {
+                        Collection<File> files =  FileUtils.listFiles(targetDir,
+                                new RegexFileFilter(".*?" + compileName + ".*?",
+                                        IOCase.INSENSITIVE), TrueFileFilter.TRUE);
+
+                        return new ArrayList<>(files);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<File>>() {
+                    @Override
+                    public void onCompleted() {
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        listener.onError(e == null ? "unknow list exception" : e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(List<File> files) {
+                        listener.onResult(files);
                     }
                 });
     }

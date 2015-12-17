@@ -42,6 +42,16 @@
                 android:orientation="vertical">
 
                 <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/search_file_fab"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="@dimen/fab_margin"
+                    android:layout_marginBottom="@dimen/fab_margin"
+                    app:fabSize="mini"
+                    android:src="@drawable/ic_search"
+                    app:backgroundTint="@color/colorAccent"/>
+                <android.support.design.widget.FloatingActionButton
                     android:id="@+id/create_folder_fab"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

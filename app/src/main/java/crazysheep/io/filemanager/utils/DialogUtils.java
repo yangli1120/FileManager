@@ -135,10 +135,10 @@ public class DialogUtils {
     /**
      * show loading dialog
      * */
-    public static Dialog showLoadingDialog(@NonNull Activity activity, String title,
+    public static Dialog showLoadingDialog(@NonNull Activity activity, String content,
                                            boolean cancelable, boolean cancelTouchOutside) {
         Dialog dialog = new MaterialDialog.Builder(activity)
-                .title(title)
+                .content(content)
                 .progress(true, 0)
                 .build();
         dialog.setOwnerActivity(activity);
