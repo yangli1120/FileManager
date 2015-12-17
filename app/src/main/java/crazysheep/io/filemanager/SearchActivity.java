@@ -25,6 +25,7 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import crazysheep.io.filemanager.adapter.RecyclerViewBaseAdapter;
 import crazysheep.io.filemanager.adapter.SearchFilesAdapter;
 import crazysheep.io.filemanager.adapter.SuggestionsAdapter;
 import crazysheep.io.filemanager.db.RxDB;
@@ -70,9 +71,9 @@ public class SearchActivity extends BaseSwipeBackActivity {
         mResultRv.addItemDecoration(new DividerItemDecoration(this,
                 DividerItemDecoration.VERTICAL_LIST,
                 getResources().getColor(R.color.light_grey)));
-        mFilesAdapter.setOnItemClickListener(new SearchFilesAdapter.OnItemClickListener() {
+        mFilesAdapter.setOnItemClickListener(new RecyclerViewBaseAdapter.OnItemClickListener() {
             @Override
-            public void onClick(int position, View view) {
+            public void onItemClick(View view, int position) {
                 File chosenFile = mFilesAdapter.getItem(position);
                 // when user click one file, save file name to database,
                 // for suggestion

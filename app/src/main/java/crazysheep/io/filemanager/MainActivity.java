@@ -41,6 +41,7 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import crazysheep.io.filemanager.adapter.FilesAdapter;
+import crazysheep.io.filemanager.adapter.RecyclerViewBaseAdapter;
 import crazysheep.io.filemanager.animator.FabAnimatorHelper;
 import crazysheep.io.filemanager.animator.FabMenuAnimatorHelper;
 import crazysheep.io.filemanager.asynctask.ScanDirTask;
@@ -174,9 +175,9 @@ public class MainActivity extends BaseActivity
         mFileAdapter = new FilesAdapter(this, null, mSettingsPrefs.getShowHiddenFiles()
                 ? FilesAdapter.MODE_SHOW_HIDDEN_FILES : FilesAdapter.MODE_NOT_SHOW_HIDDEN_FILES);
         mFileRv.setAdapter(mFileAdapter);
-        mFileAdapter.setOnItemClickListener(new FilesAdapter.OnItemClickListener() {
+        mFileAdapter.setOnItemClickListener(new RecyclerViewBaseAdapter.OnItemClickListener() {
             @Override
-            public void onClick(int position, View view) {
+            public void onItemClick(View view, int position) {
                 if (mFileAdapter.isEditingMode()) {
                     mFileAdapter.toggleItemChoose(position);
                 } else {
@@ -207,9 +208,9 @@ public class MainActivity extends BaseActivity
                 }
             }
         });
-        mFileAdapter.setOnItemLongClickListener(new FilesAdapter.OnItemLongClickListener() {
+        mFileAdapter.setOnItemLongClickListener(new RecyclerViewBaseAdapter.OnItemLongClickListener() {
             @Override
-            public boolean onLongClick(int position, View view) {
+            public boolean onItemLongClick(View view, int position) {
                 // quick go to edit mode
                 if (!mFileAdapter.isEditingMode()) {
                     toggleEditMode(true);

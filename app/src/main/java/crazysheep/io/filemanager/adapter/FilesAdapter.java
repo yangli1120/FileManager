@@ -4,7 +4,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -28,7 +27,7 @@ import crazysheep.io.filemanager.utils.FileUtils;
  *
  * Created by crazysheep on 15/11/12.
  */
-public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> {
+public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolder, FileItemDto> {
 
     public static final int MODE_SHOW_HIDDEN_FILES = 0;
     public static final int MODE_NOT_SHOW_HIDDEN_FILES = 1;
@@ -38,33 +37,25 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     public static final int EDIT_MODE_EDITING = 11;
     private int mEditMode = EDIT_MODE_NORMAL;
 
-    private Context mContext;
-    private List<FileItemDto> mAllFiles;
     private List<FileItemDto> mFiles;
-    private LayoutInflater mInflater;
     private SparseArray<Boolean> mChooseFileMap;
 
-    private OnItemClickListener mOnItemClickListener;
-    private OnItemLongClickListener mOnItemLongClickListener;
-
     public FilesAdapter(Context context, List<FileItemDto> files, int hiddenMode) {
-        mContext = context;
-        mAllFiles = files;
+        super(context, files);
+
         mCurrentMode = hiddenMode;
-        mInflater = LayoutInflater.from(mContext);
         mChooseFileMap = new SparseArray<>();
 
-        if(mAllFiles == null)
-            mAllFiles = new ArrayList<>();
         sortFiles();
         filterHidden();
         resetItemChooseState();
     }
 
+    @Override
     public void setData(List<FileItemDto> files) {
-        mAllFiles = files;
-        if(mAllFiles == null)
-            mAllFiles = new ArrayList<>();
+        mItems = files;
+        if(mItems == null)
+            mItems = new ArrayList<>();
         sortFiles();
         filterHidden();
         resetItemChooseState();
@@ -125,7 +116,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         for(FileItemDto item : items) {
             int removeIndex = mFiles.indexOf(item);
             mFiles.remove(item);
-            mAllFiles.remove(item);
+            mItems.remove(item);
 
             notifyItemRemoved(removeIndex);
         }
@@ -133,16 +124,8 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         resetItemChooseState();
     }
 
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        mOnItemClickListener = listener;
-    }
-
-    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
-        mOnItemLongClickListener = listener;
-    }
-
     @Override
-    public FileHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public FileHolder onCreateHolder(ViewGroup parent, int viewType) {
         View convertView = mInflater.inflate(R.layout.layout_file_item, parent, false);
 
         return new FileHolder(convertView);
@@ -176,46 +159,11 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
             holder.mFooterBlankSpaceV.setVisibility(View.VISIBLE);
         else
             holder.mFooterBlankSpaceV.setVisibility(View.GONE);
-
-        updateClickListener(holder);
-    }
-
-    @Override
-    public void onViewRecycled(FileHolder holder) {
-        super.onViewRecycled(holder);
-
-        updateClickListener(holder);
-    }
-
-    private void updateClickListener(final FileHolder holder) {
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (mOnItemClickListener != null)
-                    mOnItemClickListener.onClick(holder.getAdapterPosition(), holder.itemView);
-            }
-        });
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-
-            @Override
-            public boolean onLongClick(View v) {
-                if (mOnItemLongClickListener != null)
-                    mOnItemLongClickListener.onLongClick(holder.getAdapterPosition(),
-                            holder.itemView);
-
-                return true;
-            }
-        });
     }
 
     @Override
     public int getItemCount() {
         return mFiles.size();
-    }
-
-    public FileItemDto getItem(int position) {
-        return mFiles.get(position);
     }
 
     public boolean isFooter(int position) {
@@ -225,7 +173,7 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
     private void sortFiles() {
         List<FileItemDto> dirs = new ArrayList<>();
         List<FileItemDto> files = new ArrayList<>();
-        for(FileItemDto itemModel : mAllFiles)
+        for(FileItemDto itemModel : mItems)
             if(itemModel.isDir())
                 dirs.add(itemModel);
             else
@@ -236,10 +184,10 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
         // second sort files
         Collections.sort(files, new FileComparator());
 
-        List<FileItemDto> totalFiles = new ArrayList<>(mAllFiles.size());
+        List<FileItemDto> totalFiles = new ArrayList<>(mItems.size());
         totalFiles.addAll(dirs);
         totalFiles.addAll(files);
-        mAllFiles = totalFiles;
+        mItems = totalFiles;
     }
 
     private static class FileComparator implements Comparator<FileItemDto> {
@@ -252,21 +200,13 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.FileHolder> 
 
     private void filterHidden() {
         if(mCurrentMode == MODE_SHOW_HIDDEN_FILES) {
-            mFiles = mAllFiles;
+            mFiles = mItems;
         } else {
             mFiles = new ArrayList<>();
-            for(FileItemDto itemModel : mAllFiles)
+            for(FileItemDto itemModel : mItems)
                 if(!itemModel.isHidden())
                     mFiles.add(itemModel);
         }
-    }
-
-    public interface OnItemClickListener {
-        void onClick(int position, View view);
-    }
-
-    public interface OnItemLongClickListener {
-        boolean onLongClick(int position, View view);
     }
 
     ///////////////////////////// ViewHolder //////////////////////////////////
