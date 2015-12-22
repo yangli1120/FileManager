@@ -37,6 +37,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -58,6 +59,9 @@ import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.SnackBarUtils;
 import io.codetail.widget.RevealFrameLayout;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
@@ -189,7 +193,14 @@ public class MainActivity extends BaseActivity
                         // save last directory first visible position and offset
                         pushDirToStack(mCurrentDir);
 
-                        doScanDir(new ScanDirDto(file, 0, 0));
+                        Observable.just(file)
+                                .delay(150, TimeUnit.MILLISECONDS)
+                                .subscribe(new Action1<File>() {
+                                    @Override
+                                    public void call(File file) {
+                                        doScanDir(new ScanDirDto(file, 0, 0));
+                                    }
+                                });
                     } else {
                         Intent openIntent = new Intent(Intent.ACTION_VIEW);
                         openIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
