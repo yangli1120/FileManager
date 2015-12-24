@@ -59,9 +59,11 @@ import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.SnackBarUtils;
 import crazysheep.io.filemanager.utils.StringUtils;
+import crazysheep.io.filemanager.widget.FastScrollerIndicator;
 import io.codetail.widget.RevealFrameLayout;
 import rx.Observable;
 import rx.functions.Action1;
+import xyz.danoz.recyclerviewfastscroller.vertical.VerticalRecyclerViewFastScroller;
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
@@ -69,6 +71,7 @@ public class MainActivity extends BaseActivity
     @Bind(android.R.id.content) View mRootView;
     @Bind(R.id.toolbar) Toolbar mToolbar;
     @Bind(R.id.file_rv) RecyclerView mFileRv;
+    @Bind(R.id.rv_fast_scroller) VerticalRecyclerViewFastScroller mFastScroller;
     @Bind(R.id.fab) FloatingActionButton mFab;
     @Bind(R.id.fab_sheet_cv) CardView mFabSheetCv;
     @Bind(R.id.fab_sheet_rfl) RevealFrameLayout mFabRevealFl;
@@ -234,6 +237,11 @@ public class MainActivity extends BaseActivity
             }
         });
         mFileRv.setItemAnimator(new DefaultItemAnimator());
+        // fast scroller
+        mFastScroller.setRecyclerView(mFileRv);
+        mFileRv.addOnScrollListener(mFastScroller.getOnScrollListener());
+        FastScrollerIndicator indicator = ButterKnife.findById(this, R.id.rv_scroller_indicator);
+        mFastScroller.setSectionIndicator(indicator);
 
         // request permission: READ_EXTERNAL_STORAGE
         PermissionsManager.getInstance().requestPermissionsIfNecessaryForResult(this,
@@ -253,7 +261,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateStorageUI() {
-        // external storage info, hint different color
+        // external storage info, tint different color
         String usedStr = FileUtils.formatFileSize(FileIO.externalUsed());
         String totalStr = FileUtils.formatFileSize(FileIO.externalTotal());
         String rawStr = getString(R.string.tv_external_storage, usedStr, totalStr);

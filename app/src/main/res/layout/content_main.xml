@@ -9,6 +9,17 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/file_rv"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <xyz.danoz.recyclerviewfastscroller.vertical.VerticalRecyclerViewFastScroller
+        android:id="@+id/rv_fast_scroller"
+        android:layout_width="5dp"
         android:layout_height="match_parent"
-        android:scrollbars="vertical"/>
+        android:layout_marginEnd="5dp"
+        android:layout_alignParentEnd="true"
+        app:rfs_barColor="@android:color/transparent"/>
+    <crazysheep.io.filemanager.widget.FastScrollerIndicator
+        android:id="@+id/rv_scroller_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/rv_fast_scroller"/>
 </RelativeLayout>

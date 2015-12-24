@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -19,15 +20,18 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import crazysheep.io.filemanager.R;
 import crazysheep.io.filemanager.model.FileItemDto;
+import crazysheep.io.filemanager.utils.CollectionUtils;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
+import crazysheep.io.filemanager.utils.PinyinUtils;
 
 /**
  * adapter for file RecyclerView
  *
  * Created by crazysheep on 15/11/12.
  */
-public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolder, FileItemDto> {
+public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolder, FileItemDto>
+        implements SectionIndexer {
 
     public static final int MODE_SHOW_HIDDEN_FILES = 0;
     public static final int MODE_NOT_SHOW_HIDDEN_FILES = 1;
@@ -207,6 +211,26 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
                 if(!itemModel.isHidden())
                     mFiles.add(itemModel);
         }
+    }
+
+    @Override
+    public Object[] getSections() {
+        return mContext.getResources().getStringArray(R.array.section_array);
+    }
+
+    @Override
+    public int getPositionForSection(int sectionIndex) {
+        return 0;
+    }
+
+    @Override
+    public int getSectionForPosition(int position) {
+        String firstChar = mFiles.get(position).filename.trim();
+        if(PinyinUtils.isChinese(firstChar))
+            firstChar = PinyinUtils.chineneToSpell(mContext, firstChar);
+        firstChar = PinyinUtils.getAlpha(firstChar);
+
+        return CollectionUtils.findPosition(getSections(), firstChar);
     }
 
     ///////////////////////////// ViewHolder //////////////////////////////////
