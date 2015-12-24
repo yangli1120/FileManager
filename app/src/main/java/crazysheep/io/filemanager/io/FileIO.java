@@ -1,5 +1,7 @@
 package crazysheep.io.filemanager.io;
 
+import android.os.Environment;
+import android.os.StatFs;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -254,6 +256,61 @@ public class FileIO {
                         listener.onResult(files);
                     }
                 });
+    }
+
+    /////////////////////// io with system storage //////////////////////////
+
+    public static final long ERR_UNMOUNTED = -1;
+
+    public static boolean isExternalMounted() {
+        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
+    }
+
+    /**
+     * get external storage available space, not need background action, {@link StatFs} is efficient
+     * */
+    public static long externalAvailable() {
+        return isExternalMounted() ? available(Environment.getExternalStorageDirectory())
+                : ERR_UNMOUNTED;
+    }
+
+    /**
+     * get external storage total space, not need background action, {@link StatFs} is efficient
+     * */
+    public static long externalTotal() {
+        return isExternalMounted() ? total(Environment.getExternalStorageDirectory())
+                : ERR_UNMOUNTED;
+    }
+
+    /**
+     * get external storage used space, not need background action, {@link StatFs} is efficient
+     * */
+    public static long externalUsed() {
+        File externalDir = Environment.getExternalStorageDirectory();
+        return isExternalMounted() ? total(externalDir) - available(externalDir) : ERR_UNMOUNTED;
+    }
+
+    /**
+     * get internal storage available space
+     * */
+    public static long internalAvailable() {
+        return available(Environment.getRootDirectory());
+    }
+
+    /**
+     * get internal storage total space
+     * */
+    public static long internalTotal() {
+        return total(Environment.getRootDirectory());
+    }
+
+    // see{@link http://stackoverflow.com/questions/4799643/getting-all-the-total-and-available-space-on-android]
+    private static long available(@NonNull File file) {
+        return new StatFs(file.getAbsolutePath()).getAvailableBytes();
+    }
+
+    private static long total(@NonNull File file) {
+        return new StatFs(file.getAbsolutePath()).getTotalBytes();
     }
 
 }

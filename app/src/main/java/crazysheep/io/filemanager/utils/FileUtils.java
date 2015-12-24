@@ -1,5 +1,6 @@
 package crazysheep.io.filemanager.utils;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
@@ -7,6 +8,8 @@ import android.webkit.MimeTypeMap;
 import java.io.File;
 import java.util.List;
 
+import crazysheep.io.filemanager.R;
+import crazysheep.io.filemanager.compat.ColorCompat;
 import crazysheep.io.filemanager.model.MultiFileInfoDto;
 import crazysheep.io.filemanager.model.SingleFileInfoDto;
 import rx.Observable;
@@ -105,6 +108,24 @@ public class FileUtils {
             return 0l;
 
         return org.apache.commons.io.FileUtils.sizeOf(file);
+    }
+
+    /**
+     * get color stand for storage
+     * */
+    public static int colorStorage(@NonNull Context context, long available, long total) {
+        float fact = available * 1f / total;
+        int color;
+        if(fact > 1f)
+            return ColorCompat.getColorInt(context, R.color.text_dark_grey);
+        else if(fact > 0.9f)
+            color = ColorCompat.getColorInt(context, R.color.storage_dangerous);
+        else if(fact > 0.6f)
+            color = ColorCompat.getColorInt(context, R.color.storage_warn);
+        else
+            color = ColorCompat.getColorInt(context, R.color.storage_good);
+
+        return color;
     }
 
 }

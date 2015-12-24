@@ -47,5 +47,7 @@
     <string name="tv_file_dir">folder</string>
     <string name="tv_opps">Opps...</string>
     <string name="tv_please_waiting">Please waiting...</string>
+    <string name="tv_external_storage_title">External Storage: </string>
+    <string name="tv_external_storage">%1$s / %2$s</string>
 
 </resources>

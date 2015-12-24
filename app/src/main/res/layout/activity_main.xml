@@ -11,6 +11,38 @@
     <android.support.design.widget.NavigationView android:id="@+id/nav_view"
         android:layout_width="wrap_content" android:layout_height="match_parent"
         android:layout_gravity="start" android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_main" app:menu="@menu/activity_main_drawer" />
+        app:headerLayout="@layout/nav_header_main" app:menu="@menu/activity_main_drawer" >
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:layout_gravity="bottom">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/MyTextTheme.Small"
+                    android:textColor="@color/text_dark_grey"
+                    android:text="@string/tv_external_storage_title"/>
+
+                <TextView
+                    android:id="@+id/external_space_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    style="@style/MyTextTheme.Small"
+                    android:textColor="@color/text_dark_grey"
+                    android:singleLine="true"/>
+            </LinearLayout>
+        </LinearLayout>
+    </android.support.design.widget.NavigationView>
 
 </android.support.v4.widget.DrawerLayout>

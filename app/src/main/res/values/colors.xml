@@ -9,4 +9,8 @@
     <color name="light_grey">#ffc0c0c0</color>
 
     <color name="text_dark_grey">#878787</color>
+    
+    <color name="storage_good">#238423</color>
+    <color name="storage_warn">#dcb423</color>
+    <color name="storage_dangerous">#b42323</color>
 </resources>

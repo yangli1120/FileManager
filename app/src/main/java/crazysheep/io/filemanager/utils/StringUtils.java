@@ -24,7 +24,7 @@ public class StringUtils {
                                             @ColorInt int color) {
         SpannableString ssb = new SpannableString(dad);
         if(!TextUtils.isEmpty(child) && dad.contains(child)) {
-            int startIndex = dad.toLowerCase().indexOf(child.toString());
+            int startIndex = dad.toLowerCase().indexOf(child.toLowerCase());
             ssb.setSpan(new ForegroundColorSpan(color), startIndex, startIndex + child.length(),
                     Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }

@@ -58,9 +58,9 @@ import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.DialogUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.SnackBarUtils;
+import crazysheep.io.filemanager.utils.StringUtils;
 import io.codetail.widget.RevealFrameLayout;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 
 public class MainActivity extends BaseActivity
@@ -82,6 +82,7 @@ public class MainActivity extends BaseActivity
     @Bind(R.id.create_folder_fab) FloatingActionButton mCreateFolderFab;
     @Bind(R.id.edit_mode_fab) FloatingActionButton mEditModeFab;
     @Bind(R.id.search_file_fab) FloatingActionButton mSearchFab;
+    @Bind(R.id.external_space_tv) TextView mExternalSpaceTv;
 
     public static final int REQUEST_CODE_SEARCH = 1000;
 
@@ -120,6 +121,8 @@ public class MainActivity extends BaseActivity
     }
 
     private void initUI() {
+        updateStorageUI();
+
         mFabAnimatorBuilder = FabAnimatorHelper.wrap(mFab, mFabSheetCv, mFabRevealFl)
                 .setExpandedListener(new FabAnimatorHelper.DefaultAnimatorListener() {
                     @Override
@@ -247,6 +250,15 @@ public class MainActivity extends BaseActivity
                                 Snackbar.LENGTH_LONG);
                     }
                 });
+    }
+
+    private void updateStorageUI() {
+        // external storage info, hint different color
+        String usedStr = FileUtils.formatFileSize(FileIO.externalUsed());
+        String totalStr = FileUtils.formatFileSize(FileIO.externalTotal());
+        String rawStr = getString(R.string.tv_external_storage, usedStr, totalStr);
+        mExternalSpaceTv.setText(StringUtils.highlight(usedStr, rawStr,
+                FileUtils.colorStorage(this, FileIO.externalUsed(), FileIO.externalTotal())));
     }
 
     @Override
