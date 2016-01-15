@@ -519,11 +519,7 @@ public class MainActivity extends BaseActivity
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if(mFabAnimatorBuilder.isAnimating()) {
-            return true;
-        }
-
-        return super.dispatchTouchEvent(ev);
+        return mFabAnimatorBuilder.isAnimating() || super.dispatchTouchEvent(ev);
     }
 
     @Override

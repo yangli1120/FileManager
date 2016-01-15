@@ -23,6 +23,7 @@ import crazysheep.io.filemanager.model.FileItemDto;
 import crazysheep.io.filemanager.utils.CollectionUtils;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
+import crazysheep.io.filemanager.utils.L;
 import crazysheep.io.filemanager.utils.PinyinUtils;
 
 /**
@@ -41,7 +42,7 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
     public static final int EDIT_MODE_EDITING = 11;
     private int mEditMode = EDIT_MODE_NORMAL;
 
-    private List<FileItemDto> mFiles;
+    private List<FileItemDto> mAllFiles;
     private SparseArray<Boolean> mChooseFileMap;
 
     public FilesAdapter(Context context, List<FileItemDto> files, int hiddenMode) {
@@ -50,6 +51,9 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
         mCurrentMode = hiddenMode;
         mChooseFileMap = new SparseArray<>();
 
+        mAllFiles = files;
+        if(mAllFiles == null)
+            mAllFiles = new ArrayList<>();
         sortFiles();
         filterHidden();
         resetItemChooseState();
@@ -57,9 +61,9 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
 
     @Override
     public void setData(List<FileItemDto> files) {
-        mItems = files;
-        if(mItems == null)
-            mItems = new ArrayList<>();
+        mAllFiles = files;
+        if(mAllFiles == null)
+            mAllFiles = new ArrayList<>();
         sortFiles();
         filterHidden();
         resetItemChooseState();
@@ -102,8 +106,8 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
     }
 
     private void resetItemChooseState() {
-        mChooseFileMap = new SparseArray<>(mFiles.size());
-        for(int i = 0; i < mFiles.size(); i++)
+        mChooseFileMap = new SparseArray<>(mItems.size());
+        for(int i = 0; i < mItems.size(); i++)
             mChooseFileMap.put(i, false);
     }
 
@@ -111,15 +115,15 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
         List<FileItemDto> chosenItems = new ArrayList<>();
         for(int i = 0; i < mChooseFileMap.size(); i++)
             if(mChooseFileMap.valueAt(i))
-                chosenItems.add(mFiles.get(mChooseFileMap.keyAt(i)));
+                chosenItems.add(mItems.get(mChooseFileMap.keyAt(i)));
 
         return chosenItems;
     }
 
     public void removeItems(@NonNull List<FileItemDto> items) {
         for(FileItemDto item : items) {
-            int removeIndex = mFiles.indexOf(item);
-            mFiles.remove(item);
+            int removeIndex = mItems.indexOf(item);
+            mAllFiles.remove(item);
             mItems.remove(item);
 
             notifyItemRemoved(removeIndex);
@@ -137,7 +141,7 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
 
     @Override
     public void onBindViewHolder(FileHolder holder, int position) {
-        FileItemDto itemModel = mFiles.get(position);
+        FileItemDto itemModel = getItem(position);
         if(itemModel.isDir())
             holder.mFileCoverIv.setImageResource(R.drawable.ic_folder_blue);
         else
@@ -165,11 +169,6 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
             holder.mFooterBlankSpaceV.setVisibility(View.GONE);
     }
 
-    @Override
-    public int getItemCount() {
-        return mFiles.size();
-    }
-
     public boolean isFooter(int position) {
         return position == getItemCount() - 1;
     }
@@ -177,7 +176,7 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
     private void sortFiles() {
         List<FileItemDto> dirs = new ArrayList<>();
         List<FileItemDto> files = new ArrayList<>();
-        for(FileItemDto itemModel : mItems)
+        for(FileItemDto itemModel : mAllFiles)
             if(itemModel.isDir())
                 dirs.add(itemModel);
             else
@@ -188,10 +187,10 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
         // second sort files
         Collections.sort(files, new FileComparator());
 
-        List<FileItemDto> totalFiles = new ArrayList<>(mItems.size());
+        List<FileItemDto> totalFiles = new ArrayList<>(mAllFiles.size());
         totalFiles.addAll(dirs);
         totalFiles.addAll(files);
-        mItems = totalFiles;
+        mAllFiles = totalFiles;
     }
 
     private static class FileComparator implements Comparator<FileItemDto> {
@@ -204,12 +203,14 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
 
     private void filterHidden() {
         if(mCurrentMode == MODE_SHOW_HIDDEN_FILES) {
-            mFiles = mItems;
+            mItems = mAllFiles;
         } else {
-            mFiles = new ArrayList<>();
-            for(FileItemDto itemModel : mItems)
+            mItems = new ArrayList<>();
+            for(FileItemDto itemModel : mAllFiles)
                 if(!itemModel.isHidden())
-                    mFiles.add(itemModel);
+                    mItems.add(itemModel);
+
+            L.d("all files.size: " + mAllFiles.size() + ", item.size: " + mItems.size());
         }
     }
 
@@ -225,7 +226,7 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
 
     @Override
     public int getSectionForPosition(int position) {
-        String firstChar = mFiles.get(position).filename.trim();
+        String firstChar = mItems.get(position).filename.trim();
         if(PinyinUtils.isChinese(firstChar))
             firstChar = PinyinUtils.chineneToSpell(mContext, firstChar);
         firstChar = PinyinUtils.getAlpha(firstChar);

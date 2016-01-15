@@ -11,11 +11,13 @@ import com.orhanobut.logger.Logger;
  */
 public class BaseApplication extends com.activeandroid.app.Application {
 
+    public static final String TAG = "filemanager";
+
     @Override
     public void onCreate() {
         super.onCreate();
 
-        Logger.init(getPackageName());
+        Logger.init(TAG);
         ActiveAndroid.initialize(this);
         Stetho.initializeWithDefaults(this);
     }
