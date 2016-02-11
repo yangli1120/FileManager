@@ -8,8 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.SectionIndexer;
 import android.widget.TextView;
+
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +21,6 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import crazysheep.io.filemanager.R;
 import crazysheep.io.filemanager.model.FileItemDto;
-import crazysheep.io.filemanager.utils.CollectionUtils;
 import crazysheep.io.filemanager.utils.DateUtils;
 import crazysheep.io.filemanager.utils.FileUtils;
 import crazysheep.io.filemanager.utils.L;
@@ -32,7 +32,7 @@ import crazysheep.io.filemanager.utils.PinyinUtils;
  * Created by crazysheep on 15/11/12.
  */
 public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolder, FileItemDto>
-        implements SectionIndexer {
+        implements FastScrollRecyclerView.SectionedAdapter {
 
     public static final int MODE_SHOW_HIDDEN_FILES = 0;
     public static final int MODE_NOT_SHOW_HIDDEN_FILES = 1;
@@ -214,24 +214,13 @@ public class FilesAdapter extends RecyclerViewBaseAdapter<FilesAdapter.FileHolde
         }
     }
 
+    @NonNull
     @Override
-    public Object[] getSections() {
-        return mContext.getResources().getStringArray(R.array.section_array);
-    }
-
-    @Override
-    public int getPositionForSection(int sectionIndex) {
-        return 0;
-    }
-
-    @Override
-    public int getSectionForPosition(int position) {
+    public String getSectionName(int position) {
         String firstChar = mItems.get(position).filename.trim();
         if(PinyinUtils.isChinese(firstChar))
             firstChar = PinyinUtils.chineneToSpell(mContext, firstChar);
-        firstChar = PinyinUtils.getAlpha(firstChar);
-
-        return CollectionUtils.findPosition(getSections(), firstChar);
+        return PinyinUtils.getAlpha(firstChar);
     }
 
     ///////////////////////////// ViewHolder //////////////////////////////////
